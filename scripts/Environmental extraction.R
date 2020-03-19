@@ -1,0 +1,147 @@
+library(ncdf4); library(sp); library(raster)
+#-------------------------------------------------------------------------------------
+#climate data
+#-------------------------------------------------------------------------------------
+#---------------------------
+#check content climate data
+#---------------------------
+dat.fname <- "D:/Empirical Functional paper/TerraClimate_tmin_2003.nc"
+#
+##get info layers
+ncin <- nc_open(dat.fname)
+ncin
+nc_close(ncin)
+#--------------------------
+
+#--------------------------
+#upload data
+#--------------------------
+sites = read.table("C:/Users/Lise Comte/Dropbox/Time_series_sYNGEO/Fish Data/FINAL_DATA/Empirical/sites_selection_basins_same_time_window.txt",h=T)
+coordinates(sites)<- c("Longitude","Latitude")
+
+#-------------------------
+#extract data (loop over the years)
+#-------------------------
+
+b2 <- brick(dat.fname,varname="tmin",level=1)   #just to initialize the loop
+
+tmin_av = tmax_av = NULL
+for(i in 2003:2013){
+b1 <- brick(paste0("D:/Empirical Functional paper/TerraClimate_tmin_",i,".nc"),varname="tmin",level=1)   
+b2 <- brick(paste0("D:/Empirical Functional paper/TerraClimate_tmax_",i,".nc"),varname="tmax",level=1)   
+
+
+#if want to check the names
+#aa = gsub("X","",names(b2))
+#Year = sapply(strsplit(as.character(aa),".",fixed=T),'[',1)
+#Month = sapply(strsplit(as.character(aa),".",fixed=T),'[',2)
+
+#---------------------------------------------------------------
+#calculating annual average based on monthly data
+#--------------------------------------------------------------
+
+tmin = cbind(extract(b1[[1]],sites),extract(b1[[2]],sites),extract(b1[[3]],sites),extract(b1[[4]],sites),extract(b1[[5]],sites),extract(b1[[6]],sites),extract(b1[[7]],sites),extract(b1[[8]],sites),extract(b1[[9]],sites),extract(b1[[10]],sites),extract(b1[[11]],sites),extract(b1[[12]],sites))
+tmin_av = cbind(tmin_av,apply(tmin,1,mean))
+
+tmax = cbind(extract(b2[[1]],sites),extract(b2[[2]],sites),extract(b2[[3]],sites),extract(b2[[4]],sites),extract(b2[[5]],sites),extract(b2[[6]],sites),extract(b2[[7]],sites),extract(b2[[8]],sites),extract(b2[[9]],sites),extract(b2[[10]],sites),extract(b2[[11]],sites),extract(b2[[12]],sites))
+tmax_av = cbind(tmax_av,apply(tmax,1,mean))
+
+print(i)
+}
+
+colnames(tmax_av) = 2003:2013
+colnames(tmin_av) = 2003:2013
+
+tmin_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,tmin_av)
+tmax_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,tmax_av)
+
+tmean = (tmin_av[,2:12] + tmax_av[,2:12])/2
+tmean = data.frame(sYNGEO_ID = sites$sYNGEO_ID,tmean)
+
+write.csv(tmin_av,"D:/Empirical Functional paper/Sites_tmin_av.csv",row.names=F)
+write.csv(tmax_av,"D:/Empirical Functional paper/Sites_tmax_av.csv",row.names=F)
+write.csv(tmean,"D:/Empirical Functional paper/Sites_tmean_av.csv",row.names=F)
+
+#------------------------------------
+#compute anomalies
+#------------------------------------
+anom_tmean = (tmean[,2:12] - apply(tmean[,2:12],1,mean))
+anom_tmean = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_tmean)
+
+anom_tmin_av = (tmin_av[,2:12] - apply(tmin_av[,2:12],1,mean))
+anom_tmin_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_tmin_av)
+
+anom_tmax_av = (tmax_av[,2:12] - apply(tmax_av[,2:12],1,mean))
+anom_tmax_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_tmax_av)
+
+write.csv(anom_tmin_av,"D:/Empirical Functional paper/Sites_anomalies_tmin_av.csv",row.names=F)
+write.csv(anom_tmax_av,"D:/Empirical Functional paper/Sites_anomalies_tmax_av.csv",row.names=F)
+write.csv(anom_tmean,"D:/Empirical Functional paper/Sites_anomalies_tmean_av.csv",row.names=F)
+
+#-------------------------------------------------------------------------------------
+#flow data
+#-------------------------------------------------------------------------------------
+#---------------------------
+#check content flow data
+#---------------------------
+dat.fname <- "D:/Empirical Functional paper/FLO1K.ts.1960.2015.qmin.nc"
+#
+##get info layers
+ncin <- nc_open(dat.fname)
+ncin
+nc_close(ncin)
+#--------------------------
+
+#--------------------------
+#upload data
+#--------------------------
+sites = read.table("C:/Users/Lise Comte/Dropbox/Time_series_sYNGEO/Fish Data/FINAL_DATA/Empirical/sites_selection_basins_same_time_window.txt",h=T)
+coordinates(sites)<- c("Longitude","Latitude")
+
+#-------------------------
+#extract data 
+#-------------------------
+
+#create raster brick
+b1 <- brick("FLO1K.ts.1960.2015.qmin",varname="qmin",level=1)   #1960-2015
+b2 <- brick("FLO1K.ts.1960.2015.qmin",varname="qmax",level=1)   #1960-2015
+
+Year = as.numeric(sapply(strsplit(gsub("X","",names(b1)),".",fixed=T),'[',1))
+
+qmin_av = qmax_av = NULL
+for(i in 1:nrow(sites)){
+pts = sites[i,]
+ii = which(Year %in% (2003:2014)) 
+qmin_av=rbind(qmin_av,c(extract(b1,pts)[ii]))
+qmax_av=rbind(qmax_av,c(extract(b2,pts)[ii]))
+
+}
+
+colnames(qmin_av) = 2003:2013
+colnames(qmax_av) = 2003:2013
+
+qmin_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,qmin_av)
+qmax_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,qmax_av)
+
+qmean = (qmin_av[,2:12] + qmax_av[,2:12])/2
+qmean = data.frame(sYNGEO_ID = sites$sYNGEO_ID,qmean)
+
+write.csv(qmin_av,"D:/Empirical Functional paper/Sites_qmin_av.csv",row.names=F)
+write.csv(qmax_av,"D:/Empirical Functional paper/Sites_qmax_av.csv",row.names=F)
+write.csv(qmean,"D:/Empirical Functional paper/Sites_qmean_av.csv",row.names=F)
+
+#------------------------------------
+#compute anomalies
+#------------------------------------
+anom_qmean = (qmean[,2:12] - apply(qmean[,2:12],1,mean))
+anom_qmean = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_qmean)
+
+anom_qmin_av = (qmin_av[,2:12] - apply(qmin_av[,2:12],1,mean))
+anom_qmin_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_qmin_av)
+
+anom_qmax_av = (qmax_av[,2:12] - apply(qmax_av[,2:12],1,mean))
+anom_qmax_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_qmax_av)
+
+write.csv(anom_qmin_av,"D:/Empirical Functional paper/Sites_anomalies_qmin_av.csv",row.names=F)
+write.csv(anom_qmax_av,"D:/Empirical Functional paper/Sites_anomalies_qmax_av.csv",row.names=F)
+write.csv(anom_qmean,"D:/Empirical Functional paper/Sites_anomalies_qmean_av.csv",row.names=F)
