@@ -84,18 +84,21 @@ write.csv(anom_tmean,"D:/Empirical Functional paper/Sites_anomalies_tmean_av.csv
 #---------------------------
 #check content flow data
 #---------------------------
-dat.fname <- "D:/Empirical Functional paper/FLO1K.ts.1960.2015.qmin.nc"
+dat.fname <- "/Users/katieirving/Documents/sYNGEO/func_emp/data/FLO1K.ts.1960.2015.qav.nc"
 #
+str(dat.fname)
 ##get info layers
 ncin <- nc_open(dat.fname)
 ncin
 nc_close(ncin)
+
+
 #--------------------------
 
 #--------------------------
 #upload data
 #--------------------------
-sites = read.table("C:/Users/Lise Comte/Dropbox/Time_series_sYNGEO/Fish Data/FINAL_DATA/Empirical/sites_selection_basins_same_time_window.txt",h=T)
+sites = read.table("input_data/Bio/fishdata_selection_basins_same_time_window.txt",h=T)
 coordinates(sites)<- c("Longitude","Latitude")
 
 #-------------------------
@@ -103,8 +106,11 @@ coordinates(sites)<- c("Longitude","Latitude")
 #-------------------------
 
 #create raster brick
-b1 <- brick("FLO1K.ts.1960.2015.qmin",varname="qmin",level=1)   #1960-2015
-b2 <- brick("FLO1K.ts.1960.2015.qmin",varname="qmax",level=1)   #1960-2015
+# bmean <- brick("/Users/katieirving/Documents/sYNGEO/func_emp/data/FLO1K.ts.1960.2015.qav.nc",varname="qav",level=1)   #1960-2015
+
+bmin <- brick("/Users/katieirving/Documents/sYNGEO/func_emp/data/FLO1K.ts.1960.2015.qmi.nc",varname="qmi",level=1)   #1960-2015
+
+bmax <- brick("/Users/katieirving/Documents/sYNGEO/func_emp/data/FLO1K.ts.1960.2015.qma.nc",varname="qma",level=1)   #1960-2015
 
 Year = as.numeric(sapply(strsplit(gsub("X","",names(b1)),".",fixed=T),'[',1))
 
@@ -112,8 +118,8 @@ qmin_av = qmax_av = NULL
 for(i in 1:nrow(sites)){
 pts = sites[i,]
 ii = which(Year %in% (2003:2014)) 
-qmin_av=rbind(qmin_av,c(extract(b1,pts)[ii]))
-qmax_av=rbind(qmax_av,c(extract(b2,pts)[ii]))
+qmin_av=rbind(qmin_av,c(extract(bmin,pts)[ii]))
+qmax_av=rbind(qmax_av,c(extract(bmax,pts)[ii]))
 
 }
 
