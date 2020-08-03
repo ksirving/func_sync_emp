@@ -96,11 +96,11 @@ nc_close(ncin)
 #--------------------------
 
 #--------------------------
-#upload data
+#upload site data
 #--------------------------
 sites = read.table("input_data/Bio/fishdata_selection_basins_same_time_window.txt",h=T)
 coordinates(sites)<- c("Longitude","Latitude")
-
+head(sites)
 #-------------------------
 #extract data 
 #-------------------------
@@ -112,9 +112,10 @@ bmin <- brick("/Users/katieirving/Documents/sYNGEO/func_emp/data/FLO1K.ts.1960.2
 
 bmax <- brick("/Users/katieirving/Documents/sYNGEO/func_emp/data/FLO1K.ts.1960.2015.qma.nc",varname="qma",level=1)   #1960-2015
 
-Year = as.numeric(sapply(strsplit(gsub("X","",names(b1)),".",fixed=T),'[',1))
+Year = as.numeric(sapply(strsplit(gsub("X","",names(bmin)),".",fixed=T),'[',1))
 
 qmin_av = qmax_av = NULL
+i=1
 for(i in 1:nrow(sites)){
 pts = sites[i,]
 ii = which(Year %in% (2003:2014)) 
@@ -123,6 +124,8 @@ qmax_av=rbind(qmax_av,c(extract(bmax,pts)[ii]))
 
 }
 
+save(qmin_av, qmax_av, file="output_data/flow_min_max_values_extracted.RData")
+str(qmin_av)
 colnames(qmin_av) = 2003:2013
 colnames(qmax_av) = 2003:2013
 

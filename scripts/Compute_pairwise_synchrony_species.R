@@ -23,7 +23,10 @@ library(gdata)
 #///////////////////////////////////////////////////////////
 
 ### Load the data (single data set across countries & basins)
-originaldata<-read.csv("fishdata_selection_basins_cleanTaxo.csv")
+originaldata<-read.csv("output_data/fishdata_selection_basins_cleanTaxo.csv")
+originaldata <- read.csv("/Users/katieirving/Documents/sYNGEO/func_emp/data/fishdata_selection_basins_same_time_window_cleanTaxo.csv")
+head(originaldata)
+
 
 nlevels(factor(originaldata$MAIN_BAS)) 
 nlevels(factor(originaldata$New_names)) 
@@ -42,6 +45,7 @@ Nbasins<-length(unique(originaldata$MAIN_BAS))
   ###select only one sampling event per year
   basindata$OP_ID_Site<-paste0(basindata$sYNGEO_ID,"_",basindata$OP_ID)
   datasites<-unique(basindata[,c(1:6,14)])
+  datasites
   datasites$SiteYear<-paste0(datasites$sYNGEO_ID,"_",datasites$Year)
   setorder(datasites,SiteYear,Season)  #reorder table (Autumn first)
   oprem<-datasites$OP_ID_Site[which(duplicated(datasites$SiteYear))] #identify duplicated sampling events per year
