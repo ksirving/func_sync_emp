@@ -156,15 +156,12 @@ nlevels(factor(pca_basins$MAIN_BAS))
 
 library(foreach)
 library(doParallel)
+detectCores()
 # install.packages("doParallel")
 
-cl <- makePSOCKcluster(2, outfile="")
-registerDoParallel(cl)
-getDoParWorkers()
 
-
-foreach(basin=1:length(basinsID), .packages=c("dplyr", "reshape2", "tidyverse", "gdata")) %dopar% {
-
+##############################
+##### parallels not working!!!!!
 
 # for (basin in 1:length(basinsID)) {
   synchrony_axis = NULL

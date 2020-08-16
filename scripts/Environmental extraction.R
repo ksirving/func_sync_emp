@@ -92,15 +92,18 @@ ncin <- nc_open(dat.fname)
 ncin
 nc_close(ncin)
 
-
+setwd("/Users/katieirving/Documents/git/func_sync_emp")
 #--------------------------
 
 #--------------------------
 #upload site data
 #--------------------------
 sites = read.table("input_data/Bio/fishdata_selection_basins_same_time_window.txt",h=T)
-coordinates(sites)<- c("Longitude","Latitude")
 head(sites)
+sites <- sites[, -c(3:8)]
+sites <- sites[!duplicated(sites), ]
+dim(sites) ## sites
+coordinates(sites)<- c("Longitude","Latitude")
 #-------------------------
 #extract data 
 #-------------------------
@@ -124,33 +127,54 @@ qmax_av=rbind(qmax_av,c(extract(bmax,pts)[ii]))
 
 }
 
+
+
 save(qmin_av, qmax_av, file="output_data/flow_min_max_values_extracted.RData")
-str(qmin_av)
-colnames(qmin_av) = 2003:2013
-colnames(qmax_av) = 2003:2013
+load(file="output_data/flow_min_max_values_extracted.RData")
+# str(qmin_av)
+qmin_av <- as.data.frame(qmin_av)
+qmax_av <- as.data.frame(qmax_av)
+colnames(qmin_av) = 2003:2014
+colnames(qmax_av) = 2003:2014
+head(qmax_av)
 
 qmin_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,qmin_av)
 qmax_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,qmax_av)
-
 qmean = (qmin_av[,2:12] + qmax_av[,2:12])/2
-qmean = data.frame(sYNGEO_ID = sites$sYNGEO_ID,qmean)
+qmean = data.frame(SiteID = sites$SiteID,qmean)
+dim(qmin_av)
+## remove duplicates
 
-write.csv(qmin_av,"D:/Empirical Functional paper/Sites_qmin_av.csv",row.names=F)
-write.csv(qmax_av,"D:/Empirical Functional paper/Sites_qmax_av.csv",row.names=F)
-write.csv(qmean,"D:/Empirical Functional paper/Sites_qmean_av.csv",row.names=F)
-
+library(tidyverse)
 #------------------------------------
 #compute anomalies
 #------------------------------------
 anom_qmean = (qmean[,2:12] - apply(qmean[,2:12],1,mean))
 anom_qmean = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_qmean)
 
+# head(anom_qmean)
 anom_qmin_av = (qmin_av[,2:12] - apply(qmin_av[,2:12],1,mean))
 anom_qmin_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_qmin_av)
+
 
 anom_qmax_av = (qmax_av[,2:12] - apply(qmax_av[,2:12],1,mean))
 anom_qmax_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_qmax_av)
 
-write.csv(anom_qmin_av,"D:/Empirical Functional paper/Sites_anomalies_qmin_av.csv",row.names=F)
-write.csv(anom_qmax_av,"D:/Empirical Functional paper/Sites_anomalies_qmax_av.csv",row.names=F)
-write.csv(anom_qmean,"D:/Empirical Functional paper/Sites_anomalies_qmean_av.csv",row.names=F)
+
+save(anom_qmin_av,file="output_data/Sites_anomolies_qmin_av_flow.RData")
+save(anom_qmax_av,file="output_data/Sites_anomolies_qmax_av_flow.RData")
+save(anom_qmean,file="output_data/Sites_anomolies_qmean_av_flow.RData")
+
+qmin_av <- qmin_av %>%  select(-X2014)
+qmax_av <- qmax_av %>%  select(-X2014)
+
+names(qmean)
+dim(qmin_av) ## 816
+head(qmin_av)
+head(anom_qmin_av)
+
+save(qmin_av,file="output_data/Sites_qmin_av_flow.RData")
+save(qmax_av,file="output_data/Sites_qmax_av_flow.RData")
+save(qmean,file="output_data/Sites_qmean_flow.RData")
+
+
