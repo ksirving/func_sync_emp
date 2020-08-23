@@ -47,7 +47,7 @@ fish_ab2$site_seas_y<-paste(fish_ab2$sYNGEO_ID, fish_ab2$Season,fish_ab2$Year, s
 fish_ab2 %>% 
   filter(New_names=="Esox_lucius")
    ## some basins not havng season
-
+fish_ab2
 
 # convert to wide format
 #fish_mat<-dcast(fish_ab2, sYNGEO_ID  ~ Species, value.var="Abundances", fun.aggregate = sum)

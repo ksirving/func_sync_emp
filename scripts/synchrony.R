@@ -89,9 +89,9 @@ for (basin in 1:length(basinsID)) {
   #///////////////////////////////////////////////////////
   #compute btween site synchrony
   #///////////////////////////////////////////////////////    
-  ### loop over species
+  ### loop over axis
   Naxis<-length(unique(basindata_melt$axis))
-  Naxis
+  
   
   
   for (ax in 1: Naxis) {
@@ -132,8 +132,6 @@ for (basin in 1:length(basinsID)) {
 }
 
 warnings()
-synchrony_axis
-dim(synchrony_axis)
 synchrony_axis<-data.frame(synchrony_axis)
 colnames(synchrony_axis)<-c("basin_ID", "Axis", "Correlation","sYNGEO_ID1","sYNGEO_ID2")
 nlevels(factor(synchrony_axis$basin_ID)) # 46
@@ -163,7 +161,7 @@ detectCores()
 ##############################
 ##### parallels not working!!!!!
 
-# for (basin in 1:length(basinsID)) {
+for (basin in 1:length(basinsID)) {
   synchrony_axis = NULL
   basindata<-pca_basins[pca_basins$MAIN_BAS==basinsID[basin],]
   
@@ -241,11 +239,11 @@ dim(synchrony_axis) #19984257        6 - 1:28 basins
 dim(synchrony_axis) #18561158         29:46
 synchrony_axis<-data.frame(synchrony_axis)
 colnames(synchrony_axis)<-c("basin_ID", "Axis", "Correlation","sYNGEO_ID1","sYNGEO_ID2", "year_removed")
-nlevels(factor(synchrony_axis$basin_ID)) # 18
-nlevels(factor(synchrony_axis$Axis)) # 2
-nlevels(factor(synchrony_axis$year_removed)) # 11
-tail(synchrony_axis)
-head(synchrony_axis)
+# nlevels(factor(synchrony_axis$basin_ID)) # 28
+# nlevels(factor(synchrony_axis$Axis)) # 2
+# nlevels(factor(synchrony_axis$year_removed)) # 11
+# tail(synchrony_axis)
+# head(synchrony_axis)
 
 ###save results
 # save(synchrony_axis, file = "output_data/results_between_site_synchrony_1-28.RData") ## 1-28 basins
@@ -265,8 +263,9 @@ basinIDs <- unique(synchrony_axis$basin_ID)
 for (b in 1: length(basinIDs)) {
   
   basin <- subset(synchrony_axis, basin_ID == basinIDs[b])
+  basin <- na.omit(basin)
   
-  save(basin, file=paste0("output_data/", paste(basinIDs[b], "_bet_site_sync_one_out.RData", sep="")))
+  save(basin, file=paste0("output_data/basins", paste(basinIDs[b], "_bet_site_sync_one_out.RData", sep="")))
   
 }
 
@@ -280,8 +279,9 @@ basinIDs <- unique(synchrony_axis$basin_ID)
 for (b in 1: length(basinIDs)) {
   
   basin <- subset(synchrony_axis, basin_ID == basinIDs[b])
+  basin <- na.omit(basin)
   
-  save(basin, file=paste0("output_data/", paste(basinIDs[b], "_bet_site_sync_one_out.RData", sep="")))
+  save(basin, file=paste0("output_data/basins", paste(basinIDs[b], "_bet_site_sync_one_out.RData", sep="")))
   
   
 }

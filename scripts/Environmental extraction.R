@@ -155,6 +155,7 @@ anom_qmean = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_qmean)
 # head(anom_qmean)
 anom_qmin_av = (qmin_av[,2:12] - apply(qmin_av[,2:12],1,mean))
 anom_qmin_av = data.frame(sYNGEO_ID = sites$sYNGEO_ID,anom_qmin_av)
+range(anom_qmin_av$X2003)
 
 
 anom_qmax_av = (qmax_av[,2:12] - apply(qmax_av[,2:12],1,mean))
