@@ -148,9 +148,24 @@ str(data)
 head(data)
 unique(data$env_var)
 
+## get overall synchrony value - basin 2080016510, synch pair 241:242
+synchrony_axis <- read.csv("output_data/results_between_site_synchrony.csv")
+head(synchrony_axis)
+
+## create sync pair code
+synchrony_axis <- synchrony_axis %>% unite( "sync_pair", sYNGEO_ID1:sYNGEO_ID2, remove=F)
+unique(synchrony_axis$Axis)
+france <- synchrony_axis %>% filter(basin_ID == "2080016510")
+unique(france$sync_pair)
+pair <- france %>% filter(sync_pair == "242_241")
+pair
+head(synchrony_axis)
+
+
 ggplot(data, aes(x =year)) +
   geom_line(aes(y=Correlation, group = Axis, colour = Axis)) +
   geom_line(aes(y=anomolie, group = env_var, linetype = env_var )) +
+  geom_hline(yintercept=pair$Correlation, linetype="dashed",colour="grey")+
   scale_color_brewer(breaks = c("Axis1", "Axis2"),
                      palette="Set1",
                      labels = c("Fish Size", "Fish Reproductive Type"),
@@ -159,6 +174,7 @@ ggplot(data, aes(x =year)) +
                         values=c( "dotted", "solid", "dotted"),
                         labels = c("Max Temperature", "Mean Temperature", "Min Temperature"), 
                         name = "Environmental Variable") +
+  
   scale_y_continuous(name = "Synchrony", limits= c(-1,1), sec.axis =dup_axis(name="Anomolie (c)")) +
   # scale_y_continuous("Events (%)", sec.axis = sec_axis(~ (. - a)/b, name = "Discharge")) +
   facet_wrap(~sYNGEO_ID, nrow=2) +
@@ -170,6 +186,8 @@ ggplot(data, aes(x =year)) +
 
 unique(basin$sync_pair)
 
+pair <- france %>% filter(sync_pair == "668_241")
+pair
 
 basinPair2 <- basin %>% filter(sync_pair == "668_241")
 basinPair2
@@ -191,6 +209,7 @@ data
 ggplot(data, aes(x =year)) +
   geom_line(aes(y=Correlation, group = Axis, colour = Axis)) +
   geom_line(aes(y=anomolie, group = env_var, linetype = env_var )) +
+  geom_hline(yintercept=pair$Correlation, linetype="dashed",colour="grey")+
   scale_color_brewer(breaks = c("Axis1", "Axis2"),
                      palette="Set1",
                      labels = c("Fish Size", "Fish Reproductive Type"),
@@ -238,6 +257,8 @@ data <- merge(basin_flow, basinPair,  by.x="year", by.y="year_removed")
 str(data)
 head(data)
 unique(data$env_var)
+pair <- france %>% filter(sync_pair == "242_241")
+pair
 
 ylim.prim <- c(-1, 1)   # in this example, synchrony
 ylim.sec <- c(-100, 100)    # in this example, anomolie
@@ -248,6 +269,7 @@ b
 ggplot(data, aes(x =year)) +
   geom_line(aes(y=Correlation, group = Axis, colour = Axis)) +
   geom_line(aes(y=anomolie*b, group = env_var, linetype = env_var )) +
+  geom_hline(yintercept=pair$Correlation, linetype="dashed",colour="grey")+
   scale_color_brewer(breaks = c("Axis1", "Axis2"),
                      palette="Set1",
                      labels = c("Fish Size", "Fish Reproductive Type"),
@@ -267,7 +289,8 @@ ggplot(data, aes(x =year)) +
 ### test another pair
 
 unique(basin$sync_pair)
-
+pair <- france %>% filter(sync_pair == "668_241")
+pair
 
 basinPair2 <- basin %>% filter(sync_pair == "668_241")
 basinPair2
@@ -296,6 +319,7 @@ b
 ggplot(data, aes(x =year)) +
   geom_line(aes(y=Correlation, group = Axis, colour = Axis)) +
   geom_line(aes(y=anomolie*b, group = env_var, linetype = env_var )) +
+  geom_hline(yintercept=pair$Correlation, linetype="dashed",colour="grey")+
   scale_color_brewer(breaks = c("Axis1", "Axis2"),
                      palette="Set1",
                      labels = c("Fish Size", "Fish Reproductive Type"),

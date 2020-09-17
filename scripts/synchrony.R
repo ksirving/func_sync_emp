@@ -71,7 +71,7 @@ for (basin in 1:length(basinsID)) {
   basindata_melt <- basindata %>% select(-X) %>%
     reshape2::melt(id= c("site_year", "site_ID", "MAIN_BAS", "origin", "sYNGEO_ID", "year")) %>%
     rename(axis=variable, score = value)
-    
+ 
   ## test the below to see if needed
   
   # length(unique(basindata_melt$site_ID))
@@ -91,7 +91,7 @@ for (basin in 1:length(basinsID)) {
   #///////////////////////////////////////////////////////    
   ### loop over axis
   Naxis<-length(unique(basindata_melt$axis))
-  
+  Naxis
   
   
   for (ax in 1: Naxis) {
@@ -131,6 +131,7 @@ for (basin in 1:length(basinsID)) {
   }
 }
 
+synchrony_axis
 warnings()
 synchrony_axis<-data.frame(synchrony_axis)
 colnames(synchrony_axis)<-c("basin_ID", "Axis", "Correlation","sYNGEO_ID1","sYNGEO_ID2")
@@ -140,7 +141,8 @@ nlevels(factor(synchrony_axis$Axis)) # 2
 
 ###save results
 write.csv(synchrony_axis, "output_data/results_between_site_synchrony.csv")
-
+synchrony_axis <- read.csv("output_data/results_between_site_synchrony.csv")
+synchrony_axis
 ## plot synchrony
 
 ## synchrony leaving one year out
