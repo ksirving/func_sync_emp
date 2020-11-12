@@ -1,16 +1,5 @@
-#### script to run the ordination of species traits. It taked the traits infor and the fish abundance data
-### then match names, etc and uses FD::functcomp to weight traits by the relative abundance of spp in each site
-
-setwd("/Users/katieirving/Documents/sYNGEO/func_emp")
-
-# read the trait values
-trt<-read.csv("Imputed_trait_values.csv")
-head(trt)
-# log the fecundity trait
-trt$AVG_FECUND<-log(trt$AVG_FECUND)
-
-
-install.packages("FD")
+### format species data and ordination
+# install.packages("FD")
 library(FD)
 library(vegan)
 library(plyr)
@@ -18,36 +7,38 @@ library(reshape2)
 library(tidyr)
 library(dplyr)
 library(ade4)
+## upload fish abundance data
+setwd("/Users/katieirving/Documents/git/func_sync_emp")
 
-# read fish abund data
-fish_ab<-read.csv("fishdata_selection_basins_same_time_window_cleanTaxo.csv")
-fish_ab$New_names<-gsub(" ","_", fish_ab$New_names)
+
+fish_ab <- read.csv("input_data/Bio/fishdata_selection_basins_same_time_window_10262020.csv")
+head(fish_ab)
+
+# unique(FishData$UnitAbundance)
+
+## upload trait data
+
+trt <- read.csv("input_data/Bio/Matrix_traits_selection_10262020.csv")
+head(trt)
+# log the fecundity trait
+trt$AVG_FECUND<-log(trt$AVG_FECUND)
 
 # check the matchin of spp
-setdiff(trt$X, fish_ab$New_names)
-setdiff(fish_ab$New_names, trt$X) # 8 spp w/o trt info
-
-#
-#trt2<-trt[match(fish_ab$New_names, trt$X),] # creates duplicates
-
-
-# the trait df with matched spp
-trt_match<-subset(trt, trt$X %in% fish_ab$New_names)
-
-#matching fish abund with fish trt
-fish_ab2<-subset(fish_ab, fish_ab$New_names %in% trt_match$X)
+setdiff(trt$Species, fish_ab$Species)
+setdiff(fish_ab$Species, trt$Species) # all matched!!!
 
 # make sure basin is a factor
-fish_ab2$MAIN_BAS<-as.factor(fish_ab2$MAIN_BAS)
+fish_ab$HydroBasin<-as.factor(fish_ab$HydroBasin)
+
+unique(fish_ab$Month)
 
 # add variable that gives unique id based on site, season and year
-fish_ab2$site_seas_y<-paste(fish_ab2$sYNGEO_ID, fish_ab2$Season,fish_ab2$Year, sep="_")
+fish_ab2$site_seas_year<-paste(fish_ab$SiteID, fish_ab$Month,fish_ab$Year, sep="_")
 
 #### just have a look
 fish_ab2 %>% 
-  filter(New_names=="Esox_lucius")
-   ## some basins not havng season
-fish_ab2
+  filter(Species=="Esox lucius")
+## some basins not havng season
 
 # convert to wide format
 #fish_mat<-dcast(fish_ab2, sYNGEO_ID  ~ Species, value.var="Abundances", fun.aggregate = sum)
@@ -77,60 +68,68 @@ trt<- trt[order(trt$Species),] # sort species names in the trait df (they should
 row.names(trt)<-trt$Species
 trt$Species<-NULL
 head(trt)
+unique(trt$AVG_RGUILD)
 
 # create a "clean" df (called fish for traits "fish_fortr") with fish abundance for the functcomp command (weighting traits by spp relative abund)
 fish_fortrt<-fish_mat3[,c(5:276)]  
 row.names(fish_fortrt)<-fish_mat3$site_year
+head(fish_fortrt)
 
-
+?functcomp
 ## the siteXtrait matrix
 trt_matrix<-functcomp(trt, as.matrix(fish_fortrt), CWM.type = "all")
+head(trt_matrix)
+sum(is.na(trt_matrix)) ## 40
+apply(is.na(trt_matrix), 2, which)
+write.csv(trt_matrix, "output_data/01_trait_matrix_weighted_by_abundance.csv")
+## change NAs to 0 for now, change later !!!!!!!!
+
+trt_matrix[is.na(trt_matrix)] <- 0
 
 ## run PCA (called "julian_pca') with weighted traits; The weight assigned to the categorical feeding traits are lower
-?dudi.pca
-julian_pca<-dudi.pca(trt_matrix, col.w = c(1,1,1,1,1,1,1,0.2,0.2,0.2,0.2,0.2))
 
-scatter(julian_pca)
-julian_pca
+julian_pca<-dudi.pca(trt_matrix, col.w = c(1,1,1,1,1,1,0.2,0.2,0.2,0.2,0.2), scannf = FALSE, nf = 2)
+# scatter(julian_pca)
+# julian_pca
 
-
+### Plotting #####
+# plot with factoextra #
+# install.packages("factoextra")
+library(factoextra)
+head(fish_ab2)
+# create a df with all sites, basin and year info for plotting aid
+site_year_basin<-fish_mat3[,c(1,3)]
+head(site_year_basin)
+# add the basin id 
+site_year_basin$HydroBasin<- fish_ab2$HydroBasin[match( site_year_basin$site, fish_ab2$SiteID)]
+# add the origin
+site_year_basin$ORIGIN<-fish_ab2$ORIGIN[match( site_year_basin$site, fish_ab2$SiteID)]
+# add the year
+# site_year_basin<-cbind(site_year_basin, colsplit(site_year_basin$site_year, "_", c("SiteID", "Year")))
+names(site_year_basin)
 julian_pca$li # the row coordinates
 julian_pca$co # the vriable loading on the pca axes
-
 
 # prepare and export the overall sites coordinates
 
 trait_pca_scores<-cbind(julian_pca$li, site_year_basin)
 
-setwd("~/Documents/SynGeo/Functional")
-write.csv(trait_pca_scores, "trait_pca_scores.csv", row.names = T)
+write.csv(trait_pca_scores, "output_data/trait_pca_scores_new_sites.csv", row.names = T)
 
-### Plotting #####
-# plot with factoextra #
-install.packages("factoextra")
-library(factoextra)
 
-# create a df with all sites, basin and year info for plotting aid
-site_year_basin<-fish_mat4[,c(1,2)]
-# add the basin id 
-site_year_basin$MAIN_BAS<- fish_ab2$MAIN_BAS[match( site_year_basin$site, fish_ab2$sYNGEO_ID)]
-# add the origin
-site_year_basin$origin<-fish_ab2$Origin[match( site_year_basin$site, fish_ab2$sYNGEO_ID)]
-# add the year
-site_year_basin<-cbind(site_year_basin, colsplit(site_year_basin$site_year, "_", c("sINGEO_ID", "year")))
-names(site_year_basin)
-
+pca_origin
 
 # the plots
-fviz_pca(julian_pca, habillage=site_year_basin$origin, label="var", geom="point", 
+pca_origin <- fviz_pca(julian_pca, habillage=site_year_basin$ORIGIN, label="var", geom="point", 
          addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
 
 pca_year<-fviz_pca(julian_pca, habillage=as.numeric(site_year_basin$year),label="var", geom="point", 
-         addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
-
+                   addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
+pca_year
 pca_year+scale_color_grey()
 
 pca_year+scale_color_viridis_d()
+
 
 
 

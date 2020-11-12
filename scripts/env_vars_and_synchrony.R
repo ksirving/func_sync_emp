@@ -9,11 +9,11 @@ library(patchwork)
 
 # upload data -------------------------------------------------------------
 
-# climate
-# clim_tmax <- read.csv("input_data/Env/Sites_anomalies_tmax_av.csv")
-# clim_tmin <- read.csv("input_data/Env/Sites_anomalies_tmin_av.csv")
-# clim_tmean <- read.csv("input_data/Env/Sites_anomalies_tmean_av.csv")
-# 
+climate
+clim_tmax <- read.csv("input_data/Env/Sites_anomalies_tmax_av_.csv")
+clim_tmin <- read.csv("input_data/Env/Sites_anomalies_tmin_av.csv")
+clim_tmean <- read.csv("input_data/Env/Sites_anomalies_tmean_av.csv")
+
 # save(clim_tmax, clim_tmean, clim_tmin, file="output_data/Site_anomolies_climate_av.RData")
 
 load(file="output_data/Site_anomolies_climate_av.RData")
