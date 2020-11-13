@@ -12,6 +12,7 @@ setwd("/Users/katieirving/Documents/git/func_sync_emp")
 
 
 fish_ab <- read.csv("input_data/Bio/fishdata_selection_basins_same_time_window_10262020.csv")
+
 head(fish_ab)
 
 # unique(FishData$UnitAbundance)
@@ -33,8 +34,8 @@ fish_ab$HydroBasin<-as.factor(fish_ab$HydroBasin)
 unique(fish_ab$Month)
 
 # add variable that gives unique id based on site, season and year
-fish_ab2$site_seas_year<-paste(fish_ab$SiteID, fish_ab$Month,fish_ab$Year, sep="_")
-
+fish_ab$site_seas_year<-paste(fish_ab$SiteID, fish_ab$Month,fish_ab$Year, sep="_")
+fish_ab2 <- fish_ab
 #### just have a look
 fish_ab2 %>% 
   filter(Species=="Esox lucius")
@@ -82,10 +83,11 @@ head(trt_matrix)
 sum(is.na(trt_matrix)) ## 40
 apply(is.na(trt_matrix), 2, which)
 write.csv(trt_matrix, "output_data/01_trait_matrix_weighted_by_abundance.csv")
+trt_matrix <- read.csv("output_data/01_trait_matrix_weighted_by_abundance.csv")
 ## change NAs to 0 for now, change later !!!!!!!!
 
 trt_matrix[is.na(trt_matrix)] <- 0
-
+head(trt_matrix)
 ## run PCA (called "julian_pca') with weighted traits; The weight assigned to the categorical feeding traits are lower
 
 julian_pca<-dudi.pca(trt_matrix, col.w = c(1,1,1,1,1,1,0.2,0.2,0.2,0.2,0.2), scannf = FALSE, nf = 2)
@@ -103,7 +105,7 @@ head(site_year_basin)
 # add the basin id 
 site_year_basin$HydroBasin<- fish_ab2$HydroBasin[match( site_year_basin$site, fish_ab2$SiteID)]
 # add the origin
-site_year_basin$ORIGIN<-fish_ab2$ORIGIN[match( site_year_basin$site, fish_ab2$SiteID)]
+site_year_basin$Country<-fish_ab2$Country[match(site_year_basin$site, fish_ab2$SiteID)]
 # add the year
 # site_year_basin<-cbind(site_year_basin, colsplit(site_year_basin$site_year, "_", c("SiteID", "Year")))
 names(site_year_basin)
@@ -120,7 +122,7 @@ write.csv(trait_pca_scores, "output_data/trait_pca_scores_new_sites.csv", row.na
 pca_origin
 
 # the plots
-pca_origin <- fviz_pca(julian_pca, habillage=site_year_basin$ORIGIN, label="var", geom="point", 
+pca_origin <- fviz_pca(julian_pca, habillage=site_year_basin$Country, label="var", geom="point", 
          addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
 
 pca_year<-fviz_pca(julian_pca, habillage=as.numeric(site_year_basin$year),label="var", geom="point", 
