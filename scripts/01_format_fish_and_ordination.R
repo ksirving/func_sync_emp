@@ -14,6 +14,24 @@ setwd("/Users/katieirving/Documents/git/func_sync_emp")
 fish_ab <- read.csv("input_data/Bio/fishdata_selection_basins_same_time_window_10262020.csv")
 
 head(fish_ab)
+str(fish_ab)
+## remove basins - Sweden 2080030650 and 2080031160
+## keep only origin Ohio and LTRM in mississippi
+## change to relative abundance
+## missing trait values - remove fish with less than 2 traits (check that it's less than 5%)
+## use gower distance to interpolate?, 
+
+basins_remove <- c(2080031160, 2080030650)
+origin_remove <- c("Tennessee", "ltr")
+
+fish_ab <- fish_ab %>%
+  filter(!HydroBasin %in% basins_remove, !ORIGIN %in% origin_remove) 
+
+
+fish_ab_rel <- fish_ab %>%
+  group_by(SiteID, Year) %>%
+  mutate(TotalAbundance = sum(Abundance)) %>%
+  mutate(RelAbundance = Abundance/TotalAbundance)
 
 # unique(FishData$UnitAbundance)
 
