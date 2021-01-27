@@ -21,39 +21,76 @@ str(fish_ab)
 ## missing trait values - remove fish with less than 2 traits (check that it's less than 5%)
 ## use gower distance to interpolate?, 
 
+## remove basins - Sweden 2080030650 and 2080031160
+## keep only origin Ohio and LTRM in mississippi
 basins_remove <- c(2080031160, 2080030650)
 origin_remove <- c("Tennessee", "ltr")
 
 fish_ab <- fish_ab %>%
   filter(!HydroBasin %in% basins_remove, !ORIGIN %in% origin_remove) 
 
-
+## change to relative abundance - site/year
 fish_ab_rel <- fish_ab %>%
   group_by(SiteID, Year) %>%
   mutate(TotalAbundance = sum(Abundance)) %>%
-  mutate(RelAbundance = Abundance/TotalAbundance)
+  mutate(RelAbundance = (Abundance/TotalAbundance)*100)
 
 # unique(FishData$UnitAbundance)
+## missing trait values - remove fish with less than 2 traits (check that it's less than 5%)
 
 ## upload trait data
 
 trt <- read.csv("input_data/Bio/Matrix_traits_selection_10262020.csv")
 head(trt)
+dim(trt) ## 272, 7 traits
+
+## count NAs in each row
+trt <- trt %>%
+  mutate(number_nas = rowSums(is.na(trt)))
+
+rare_species <- trt %>%
+  filter(number_nas > 5)
+
+RSp <- rare_species$Species
+RSp
+## [1] "Etheostoma tennesseense" "Gobio occitaniae"        "Notropis wickliffi"     
+## [4] "Percina williamsi"       "Phoxinus bigerri"        "Squalius laietanus" 
+
+## check species are only 5% of abundance at site/year
+
+head(fish_ab_rel)
+
+fish_ab_rel_rare <- fish_ab_rel %>%
+  filter(Species %in% RSp)
+
+unique(fish_ab_rel_rare$Species) ## not rare species!!!
+
+# "Squalius laietanus" "Phoxinus bigerri"   "Gobio occitaniae"   "Notropis wickliffi"
+
+## filter trt to same species as fish df
+
+fish_sp <- unique(fish_ab_rel$Species)
+
+trt <- trt %>%
+  filter(Species %in% fish_sp)
+
 # log the fecundity trait
 trt$AVG_FECUND<-log(trt$AVG_FECUND)
 
 # check the matchin of spp
-setdiff(trt$Species, fish_ab$Species)
+setdiff(trt$Species, fish_ab_rel$Species)
 setdiff(fish_ab$Species, trt$Species) # all matched!!!
-
+# length(unique(trt$Species)) ## 272
+# length(unique(fish_ab_rel$Species)) ## 236 - fewer species due to removal of basins and origins
 # make sure basin is a factor
 fish_ab$HydroBasin<-as.factor(fish_ab$HydroBasin)
 
 unique(fish_ab$Month)
 
 # add variable that gives unique id based on site, season and year
-fish_ab$site_seas_year<-paste(fish_ab$SiteID, fish_ab$Month,fish_ab$Year, sep="_")
-fish_ab2 <- fish_ab
+
+fish_ab2 <- fish_ab_rel
+fish_ab2$site_seas_year<-paste(fish_ab2$SiteID, fish_ab2$Month,fish_ab2$Year, sep="_")
 #### just have a look
 fish_ab2 %>% 
   filter(Species=="Esox lucius")
@@ -82,19 +119,20 @@ names(fish_mat3)
 #############################################
 ## towards the df of sites by traits ######
 
+
 ## functcomp requires spp and site names to be row names and column names etc, and the df should not contain other info ##
 trt<- trt[order(trt$Species),] # sort species names in the trait df (they should match the fish matrix)
 row.names(trt)<-trt$Species
 trt$Species<-NULL
 head(trt)
-unique(trt$AVG_RGUILD)
 
 # create a "clean" df (called fish for traits "fish_fortr") with fish abundance for the functcomp command (weighting traits by spp relative abund)
-fish_fortrt<-fish_mat3[,c(5:276)]  
+fish_fortrt<-fish_mat3[,c(5:240)]  
 row.names(fish_fortrt)<-fish_mat3$site_year
 head(fish_fortrt)
 
-?functcomp
+
+
 ## the siteXtrait matrix
 trt_matrix<-functcomp(trt, as.matrix(fish_fortrt), CWM.type = "all")
 head(trt_matrix)
@@ -106,8 +144,9 @@ trt_matrix <- read.csv("output_data/01_trait_matrix_weighted_by_abundance.csv")
 
 trt_matrix[is.na(trt_matrix)] <- 0
 head(trt_matrix)
+trt_matrix$number_nas <- NULL
 ## run PCA (called "julian_pca') with weighted traits; The weight assigned to the categorical feeding traits are lower
-
+?dudi.pca
 julian_pca<-dudi.pca(trt_matrix, col.w = c(1,1,1,1,1,1,0.2,0.2,0.2,0.2,0.2), scannf = FALSE, nf = 2)
 # scatter(julian_pca)
 # julian_pca
