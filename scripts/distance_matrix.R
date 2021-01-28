@@ -3,6 +3,7 @@
 ## workflow
 library(sp)
 library(raster)
+library(ggplot2)
 ## get distances between sites
 ## Eucliean
 ## watercourse
@@ -10,38 +11,102 @@ library(raster)
 ## synchonry data
 
 sync <- read.csv("output_data/02_results_between_site_synchrony_Jan2020.csv")
-
+head(sync)
+mean(na.omit(sync$Correlation))
+sum(na.omit(sync$Correlation))
 
 ## site coords
 
 fish_ab <- read.csv("input_data/Bio/fishdata_selection_basins_same_time_window_10262020.csv")
 head(fish_ab)
 
+## define pairs
+sync <- sync %>%
+  rename(Pair = X) %>%
+  mutate(Euclid_Dist_Meters = NA, Similarity = NA)
+
+pairs <- unique(sync$Pair)
+
+## get coords
 SiteCoords <- fish_ab %>%
- select(SiteID, Latitude, Longitude, HydroBasin) %>%
+ dplyr::select(SiteID, Latitude, Longitude, HydroBasin) %>%
   distinct()
 
-## make spatial
-head(SiteCoords)
-str(SiteCoords)
+## loop over pairs
+# p=2
+for(p in 1:length(pairs)) {
+  
+  ## get pair from sync data
+  
+  pairx <- sync %>%
+    filter(Pair == pairs[p])
 
-sp::coordinates(SiteCoords) <- c("Latitude", "Longitude")
-## get distance between points per basin
-SiteCoords[1,1]
-pointDistance(p1, p2, lonlat)
-## https://stackoverflow.com/questions/32363998/function-to-calculate-geospatial-distance-between-two-points-lat-long-using-r
-# NOT RUN {
-a <- cbind(c(1,5,55,31),c(3,7,20,22))
-b <- cbind(c(4,2,8,65),c(50,-90,20,32))   
-a
-b
-pointDistance(c(0, 0), c(1, 1), lonlat=FALSE)
-pointDistance(c(0, 0), c(1, 1), lonlat=TRUE)
-pointDistance(c(0, 0), a, lonlat=TRUE)
-pointDistance(a, b, lonlat=TRUE)
-dst
-#Make a distance matrix 
-dst <- pointDistance(a, lonlat=TRUE)
-# coerce to dist object
-dst <- as.dist(dst)
-# }
+  ## define sites
+  S1 <- pairx$Site_ID1
+  S2 <- pairx$Site_ID2
+
+  ## get coords for each site
+  CoordsS1 <- SiteCoords %>%
+    filter(SiteID == S1) %>%
+    dplyr::select(Longitude, Latitude, SiteID)
+  
+  CoordsS2 <- SiteCoords %>%
+    filter(SiteID == S2) %>%
+    dplyr::select(Longitude, Latitude, SiteID)
+
+  sp::coordinates(CoordsS1) <- c("Longitude", "Latitude")
+  sp::coordinates(CoordsS2) <- c("Longitude", "Latitude")
+  
+  #Make a distance matrix 
+  dst <- pointDistance(CoordsS1,CoordsS2, lonlat=TRUE)
+
+  ## add to dataframe
+  sync[p,7] <- dst
+ 
+
+}
+  
+
+  ## convert to similarities
+
+## loops over basins
+
+head(sync)
+
+BasinsDFx <- NULL
+
+Basins <- unique(sync$basin_ID)
+
+for(s in 1:length(Basins)) {
+  
+  BasinsDF <- sync %>%
+    filter(basin_ID == Basins[s])
+  
+  BasinsDF <- BasinsDF %>%
+    mutate(MaxDist = max(Euclid_Dist_Meters)) %>%
+    mutate(Similarity = 1-(Euclid_Dist_Meters/MaxDist))
+  
+  BasinsDFx <- rbind(BasinsDFx, BasinsDF)
+  
+}
+
+head(BasinsDFx)
+
+#then plot
+ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
+  geom_line()+
+  labs(title="Correlation") #+
+
+  
+  ## try one basin
+  
+  sync_basin <- BasinsDFx %>%
+    filter(basin_ID == Basins[1])
+  
+  sync_basin
+  
+  #then plot
+  ggplot(sync_basin, aes(x=Similarity,y=Correlation))+
+    geom_line()+
+    labs(title="Correlation") #+
+  facet_wrap(~Axis)

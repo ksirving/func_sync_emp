@@ -63,7 +63,7 @@ head(fish_ab_rel)
 fish_ab_rel_rare <- fish_ab_rel %>%
   filter(Species %in% RSp)
 
-unique(fish_ab_rel_rare$Species) ## not rare species!!!
+unique(fish_ab_rel_rare$Species) ## "Squalius laietanus" "Phoxinus bigerri"   "Gobio occitaniae"   "Notropis wickliffi"
 
 # "Squalius laietanus" "Phoxinus bigerri"   "Gobio occitaniae"   "Notropis wickliffi"
 
