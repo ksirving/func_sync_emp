@@ -22,13 +22,9 @@ getwd()
 originaldata <- read.csv("input_data/Bio/fishdata_selection_basins_same_time_window_10262020.csv")
 head(originaldata)
 
-unique(originaldata$Year)
-y = subset(originaldata, Year == 2004)
-unique(y$HydroBasin) ## 43
-unique(originaldata$HydroBasin) ## 45
 ## upload pca scores for synchrony
 
-pca_scores <- read.csv("output_data/trait_pca_scores_new_sites.csv")
+pca_scores <- read.csv("output_data/01_trait_pca_scores_new_sites.csv")
 
 ## which axis?
 ## dimension 1 explains 54.4%
@@ -95,7 +91,6 @@ for (basin in 1:length(basinsID)) {
   ### loop over axis
   Naxis<-length(unique(basindata_melt$axis))
 
-  ax=1
   
   for (ax in 1: Naxis) {
     
@@ -104,7 +99,7 @@ for (basin in 1:length(basinsID)) {
 
     # make df wide
     axis_data  <- axis_data %>% 
-      select(-c(site_year) ) %>%
+      dplyr::select(-c(site_year) ) %>%
       spread(site, score) #%>%
 
     # flip data
@@ -121,6 +116,7 @@ for (basin in 1:length(basinsID)) {
 
     ### synchrony
     correlation<-cor(t(axis_data), use = "pairwise.complete.obs")
+    head(correlation)
     vector_data_correl<- unmatrix(correlation,byrow=F)
     lower_triangle<-lower.tri(correlation)
     vector_data_triangle<-unmatrix(lower_triangle, byrow=F)
@@ -130,15 +126,17 @@ for (basin in 1:length(basinsID)) {
     correl_result
     synchrony_axis<-rbind(synchrony_axis, cbind(basinsID[basin], 
                                               as.character(unique(basindata_melt$axis)[ax]),
+                                              basindata_melt$Country[1],
                                               correl_result,site_ID1,site_ID2))
   }
 }
-
+basinsID[basin]
+basindata_melt$Country
 synchrony_axis
 warnings()
 synchrony_axis<-data.frame(synchrony_axis)
-colnames(synchrony_axis)<-c("basin_ID", "Axis", "Correlation","Site_ID1","Site_ID2")
-nlevels(factor(synchrony_axis$basin_ID)) # 45
+colnames(synchrony_axis)<-c("basin_ID", "Axis","Country", "Correlation","Site_ID1","Site_ID2")
+nlevels(factor(synchrony_axis$basin_ID)) # 43
 nlevels(factor(synchrony_axis$Axis)) # 2
 
 
@@ -157,7 +155,7 @@ synchrony_axis
 ### loop over basins
 basinsID<-unique(pca_basins$HydroBasin) # 46 basins
 Nbasins<-length(unique(pca_basins$HydroBasin))
-basinsID[basin]
+basinsID
 nlevels(factor(pca_basins$HydroBasin)) 
 # synchrony_axis = NULL
 
@@ -179,8 +177,8 @@ for (basin in 1:length(basinsID)) {
   #/////////////////////////////////////////////////////
   
   
-  basindata_melt <- basindata %>% select(-X) %>%
-    reshape2::melt(id= c("site_year", "site_ID", "HydroBasin", "origin", "sYNGEO_ID", "year")) %>%
+  basindata_melt <- basindata  %>%
+    reshape2::melt(id= c("site_year", "HydroBasin", "Country", "site", "year")) %>%
     rename(axis=variable, score = value)
   
   
@@ -190,17 +188,17 @@ for (basin in 1:length(basinsID)) {
   
   ### loop over species
   Naxis<-length(unique(basindata_melt$axis))
-  # ax <- 1
+
   
   ## loop over axis
   for (ax in 1: Naxis) {
     axis_data<-basindata_melt[basindata_melt$axis==unique(basindata_melt$axis)[ax],]
     years <- unique(sort(axis_data$year)) ## define years for columns
-    
+    # head(axis_data)
     # make df wide
     axis_data  <- axis_data %>% 
-      select(-c(site_year, sYNGEO_ID) ) %>%
-      spread(site_ID, score) #%>%
+      dplyr::select(-c(site_year) ) %>%
+      spread(site, score) #%>%
     # flip data
     axis_data <- t(axis_data)[-c(1:4),]
     
@@ -213,7 +211,7 @@ for (basin in 1:length(basinsID)) {
     # change NAs to zero - can change later if needed
     axis_data[which(is.na(axis_data))] <- 0
   
-    ### synchrony - leaving one out
+  ### synchrony - leaving one out
     ## loop over years
     for (y in 1: length(years)) {
     
@@ -229,68 +227,29 @@ for (basin in 1:length(basinsID)) {
     correl_result
     synchrony_axis<-rbind(synchrony_axis, cbind(basinsID[basin], 
                                                 as.character(unique(basindata_melt$axis)[ax]),
+                                                basindata_melt$Country[1],
                                                 correl_result,site_ID1,site_ID2, year_removed))
     synchrony_axis
     }
     
   }
   synchrony_axis<-data.frame(synchrony_axis)
-  colnames(synchrony_axis)<-c("basin_ID", "Axis", "Correlation","sYNGEO_ID1","sYNGEO_ID2", "year_removed")
-  save(synchrony_axis, file=paste0("output_data/", paste(basinsID[basin]), "_bet_site_sync_one_out.RData", sep=""))
+  colnames(synchrony_axis)<-c("basin_ID", "Axis","Country", "Correlation","Site_ID1","Site_ID2", "year_removed")
+  save(synchrony_axis, file=paste0("output_data/01_", paste(basinsID[basin]), "_bet_site_sync_one_out.RData", sep=""))
   rm(synchrony_axis)
 }
 
-  stopCluster(cl)
-  warnings()
-# warnings()
-# synchrony_axis
-dim(synchrony_axis) #19984257        6 - 1:28 basins
-dim(synchrony_axis) #18561158         29:46
-synchrony_axis<-data.frame(synchrony_axis)
-colnames(synchrony_axis)<-c("basin_ID", "Axis", "Correlation","sYNGEO_ID1","sYNGEO_ID2", "year_removed")
-# nlevels(factor(synchrony_axis$basin_ID)) # 28
-# nlevels(factor(synchrony_axis$Axis)) # 2
-# nlevels(factor(synchrony_axis$year_removed)) # 11
-# tail(synchrony_axis)
-# head(synchrony_axis)
-
-###save results
-# save(synchrony_axis, file = "output_data/results_between_site_synchrony_1-28.RData") ## 1-28 basins
-# load(file = "output_data/results_between_site_synchrony_1-28.RData")
 
 
-save(synchrony_axis, file = "output_data/results_between_site_synchrony_29-46.RData") ## 29-46 basins
+load(file= "/Users/katieirving/Documents/git/func_sync_emp/output_data/01_7080047060_bet_site_sync_one_out.RData")
+  head(synchrony_axis)
 
-# save(synchrony_axis, file = paste0("output_data/results_between_site_synchrony", basinsID[basin],  ".RData"))
-
-load(file = "output_data/results_between_site_synchrony_1-28.RData")
-
-## split data files by basin
-
-basinIDs <- unique(synchrony_axis$basin_ID)
-
-for (b in 1: length(basinIDs)) {
+### between basin synchrony
   
-  basin <- subset(synchrony_axis, basin_ID == basinIDs[b])
-  basin <- na.omit(basin)
+  originaldata <- read.csv("input_data/Bio/fishdata_selection_basins_same_time_window_10262020.csv")
+  head(originaldata)
   
-  save(basin, file=paste0("output_data/basins", paste(basinIDs[b], "_bet_site_sync_one_out.RData", sep="")))
+  ## upload pca scores for synchrony
   
-}
+  pca_scores <- read.csv("output_data/01_trait_pca_scores_new_sites.csv")
 
-rm(synchrony_axis)
-
-load(file = "output_data/results_between_site_synchrony_29-46.RData")
-## split data files by basin
-
-basinIDs <- unique(synchrony_axis$basin_ID)
-
-for (b in 1: length(basinIDs)) {
-  
-  basin <- subset(synchrony_axis, basin_ID == basinIDs[b])
-  basin <- na.omit(basin)
-  
-  save(basin, file=paste0("output_data/basins", paste(basinIDs[b], "_bet_site_sync_one_out.RData", sep="")))
-  
-  
-}

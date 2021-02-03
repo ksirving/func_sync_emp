@@ -61,7 +61,7 @@ for(p in 1:length(pairs)) {
   dst <- pointDistance(CoordsS1,CoordsS2, lonlat=TRUE)
 
   ## add to dataframe
-  sync[p,7] <- dst
+  sync[p,8] <- dst
  
 
 }
@@ -110,3 +110,6 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
     geom_line()+
     labs(title="Correlation") #+
   facet_wrap(~Axis)
+  
+  
+  write.csv(BasinsDFx, "output_data/04_sync_data_similarity_euclidean_dist.csv")
