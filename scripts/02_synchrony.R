@@ -253,3 +253,165 @@ load(file= "/Users/katieirving/Documents/git/func_sync_emp/output_data/01_708004
   
   pca_scores <- read.csv("output_data/01_trait_pca_scores_new_sites.csv")
 
+  ## centroid of basin
+  
+  head(pca_scores)
+  
+  pca_means <- pca_scores %>%
+    group_by(HydroBasin, Axis, year, Country) %>%
+    summarise(BasinCentroidYear = mean(Score))
+  
+  head(pca_means)
+  
+  ### between basin synchrony
+  
+  CountryID<-unique(pca_means$Country) # 7 basins
+  CountryID <- CountryID[-c(3,5)] ## remove UK and Finland as they only have 1 basin
+  # Nbasins<-length(unique(pca_basins$HydroBasin))
+  
+  nlevels(factor(pca_means$Country)) 
+  synchrony_axis = NULL
+  country 
+  
+  for (country in 1:length(CountryID)) {
+    countrydata<-pca_means[pca_means$Country==CountryID[country],]
+    
+    #//////////////////////////////////////////////////////
+    #data preparation
+    #/////////////////////////////////////////////////////
+    
+    # countrydata_melt <- countrydata  %>%
+    #   reshape2::melt(id= c( "Country", "HydroBasin", "year")) %>%
+    #   rename(axis=variable, score = value)
+    # head(countrydata_melt)
+    ## test the below to see if needed
+    
+    # length(unique(basindata_melt$site_ID))
+    # calculate (temporal) prevalence per site (filter scores present in at least 80% site/years)
+    # timserieslength<-length(unique(basindata$year))
+    
+    # site_consistency<- basindata_melt %>%
+    #   group_by(sYNGEO_ID, axis) %>%
+    #   summarize(prop.occurrence=length(unique(year))/timserieslength) %>%
+    #   subset(prop.occurrence>=.8) 
+    # 
+    # basindata_melt$site_ID %in% site_consistency$sYNGEO_ID ## check all match
+    # 
+    
+    #///////////////////////////////////////////////////////
+    #compute btween site synchrony
+    #///////////////////////////////////////////////////////    
+    ### loop over axis
+    Naxis<-length(unique(countrydata$Axis))
+    
+    ax
+    for (ax in 1: Naxis) {
+      
+      axis_data<-countrydata[countrydata$Axis==unique(countrydata$Axis)[ax],]
+      years <- unique(sort(axis_data$year)) ## define years for columns
+      
+      # make df wide
+      axis_data  <- axis_data %>% 
+        # dplyr::select(-c(site_year) ) %>%
+        spread(HydroBasin, BasinCentroidYear) #%>%
+      # head(axis_data)
+      # flip data
+      axis_data <- t(axis_data)[-c(1:3),]
+      
+      # define rows and column names and convert to numbers
+      sitesIDs<-rownames(axis_data)
+      colnames(axis_data) <- years
+      axis_data<-apply(axis_data, 2, as.numeric)
+      rownames(axis_data)<-sitesIDs
+      
+      # change NAs to zero - can change later if needed
+      axis_data[which(is.na(axis_data))] <- 0
+      
+      ### synchrony
+      correlation<-cor(t(axis_data), use = "pairwise.complete.obs")
+      head(correlation)
+      vector_data_correl<- unmatrix(correlation,byrow=F)
+      lower_triangle<-lower.tri(correlation)
+      vector_data_triangle<-unmatrix(lower_triangle, byrow=F)
+      correl_result<-vector_data_correl[vector_data_triangle]
+      Basin_ID1<-sapply(strsplit(names(correl_result),":"),'[',1)
+      Basin_ID2<-sapply(strsplit(names(correl_result),":"),'[',2)
+      correl_result
+      synchrony_axis<-rbind(synchrony_axis, cbind(CountryID[country], 
+                                                  as.character(unique(countrydata$Axis)[ax]),
+                                                  correl_result,Basin_ID1,Basin_ID2))
+    }
+  }
+  
+  synchrony_axis<-data.frame(synchrony_axis)
+  head(synchrony_axis)
+  colnames(synchrony_axis)<-c("Country", "Axis", "Correlation","BasinID1","BasinID2")
+
+  write.csv(synchrony_axis, "output_data/02_between_basin_sync_per_country.csv")  
+  
+  # between basin synchrony, whole data
+  ## upload pca scores for synchrony
+  
+  pca_scores <- read.csv("output_data/01_trait_pca_scores_new_sites.csv")
+  pca_scores <- pca_scores %>%
+    pivot_longer(Axis1:Axis2, names_to = "Axis", values_to = "Score")
+  
+  ## centroid of basin
+  
+  head(pca_scores)
+  
+  pca_means <- pca_scores %>%
+    group_by(HydroBasin, Axis, year, Country) %>%
+    summarise(BasinCentroidYear = mean(Score))
+  
+  head(pca_means)
+  
+  synchrony_axis = NULL
+  
+  
+    Naxis<-length(unique(pca_means$Axis))
+    Naxis
+    # ax=1
+    for (ax in 1: Naxis) {
+      
+      axis_data<-pca_means[pca_means$Axis==unique(pca_means$Axis)[ax],]
+      years <- unique(sort(axis_data$year)) ## define years for columns
+      
+      # make df wide
+      axis_data  <- axis_data %>% 
+        dplyr::select(-c(Country) ) %>%
+        spread(HydroBasin, BasinCentroidYear) #%>%
+      head(axis_data)
+      # flip data
+      axis_data <- t(axis_data)[-c(1:3),]
+      
+      # define rows and column names and convert to numbers
+      sitesIDs<-rownames(axis_data)
+      colnames(axis_data) <- years
+      axis_data<-apply(axis_data, 2, as.numeric)
+      rownames(axis_data)<-sitesIDs
+      
+      # change NAs to zero - can change later if needed
+      axis_data[which(is.na(axis_data))] <- 0
+      
+      ### synchrony
+      correlation<-cor(t(axis_data), use = "pairwise.complete.obs")
+      head(correlation)
+      vector_data_correl<- unmatrix(correlation,byrow=F)
+      lower_triangle<-lower.tri(correlation)
+      vector_data_triangle<-unmatrix(lower_triangle, byrow=F)
+      correl_result<-vector_data_correl[vector_data_triangle]
+      Basin_ID1<-sapply(strsplit(names(correl_result),":"),'[',1)
+      Basin_ID2<-sapply(strsplit(names(correl_result),":"),'[',2)
+      correl_result
+      synchrony_axis<-rbind(synchrony_axis, cbind(as.character(unique(pca_means$Axis)[ax]),
+                                                  correl_result,Basin_ID1,Basin_ID2))
+    }
+  
+    synchrony_axis<-data.frame(synchrony_axis)
+    head(synchrony_axis)
+    dim(synchrony_axis)
+    colnames(synchrony_axis)<-c("Axis", "Correlation","BasinID1","BasinID2")
+    
+    write.csv(synchrony_axis, "output_data/02_between_basin_sync_all_together.csv")  
+    

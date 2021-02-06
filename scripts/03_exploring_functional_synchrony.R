@@ -76,14 +76,21 @@ SimSync <- read.csv( "output_data/04_sync_data_similarity_euclidean_dist.csv")
 head(SimSync)
 
 str(SimSync)
+str(pca_scores)
 
 SimSync$basin_ID <- as.factor(SimSync$basin_ID)
  
-SimSync1 <- SimSync %>%
-  filter(Axis == "Axis1")
+# SimSync1 <- SimSync %>%
+#   filter(Axis == "Axis1")
 
-ggplot(SimSync1, aes(x=basin_ID, y=Correlation, fill=Axis)) + 
-  geom_boxplot()
+## figure shows fish size and reproduction overall synchrony in each basin
+ggplot(SimSync, aes(x=basin_ID, y=Correlation, fill=Axis)) + 
+  geom_boxplot() +
+  facet_wrap(~Country, scale="free") 
+
+## how many basins in each country
+
+basin_tally <- SimSync %>% group_by(Country) %>% count(basin_ID)
 
 ## try one country
 
@@ -177,5 +184,52 @@ data <- as.matrix(FIN_syncx)
 head(data)
 # Default Heatmap
 heatmap(data)
+head(SimSync)
+
+## plot between site synchrony
+
+BasinSync <- read.csv("output_data/02_between_basin_sync_per_country.csv")
+AllSync <- read.csv("output_data/02_between_basin_sync_all_together.csv")
+
+head(BasinSync)
+
+ggplot(BasinSync, aes(x=Country, y=Correlation, fill=Axis)) + 
+  geom_boxplot() +
+  facet_wrap(~Axis, scale="free") 
+
+head(AllSync)
+
 
 ## distance matrix of site synchrony
+
+
+
+
+# load sda library
+install.packages("sda")
+library("sda")
+
+## prepare data set
+# data(iris) # good old iris data
+# head(iris)
+# X = as.matrix(iris[,1:4])
+# Y = iris[,5]
+# X
+# Y
+# ## estimate centroids and empirical pooled variances
+# centroids(X, Y, lambda.var=0)
+# 
+# ## also compute group-specific variances
+# centroids(X, Y, var.groups=TRUE, lambda.var=0)
+# 
+# ## use shrinkage estimator for the variances
+# centroids(X, Y, var.groups=TRUE)
+# 
+# ## return centered data
+# xc = centroids(X, Y, centered.data=TRUE)$centered.data
+# xc
+# apply(xc, 2, mean)
+# 
+# ## useful, e.g., to compute the inverse pooled correlation matrix
+# powcor.shrink(xc, alpha=-1)
+
