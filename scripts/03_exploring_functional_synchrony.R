@@ -146,8 +146,6 @@ mean_sync <- SimSync %>%
 ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
   geom_point() ### this is nice, how to get sync values between 0 and 1?
 
-
-
 head(mean_sync)
 
 basins <- sync %>%
@@ -199,6 +197,41 @@ ggplot(BasinSync, aes(x=Country, y=Correlation, fill=Axis)) +
 
 head(AllSync)
 
+### basin synchrony and similarity
+
+CountriesDFx <- read.csv("output_data/04_basin_sync_data_similarity_euclidean_dist.csv")
+head(CountriesDFx)
+
+mean_sync <- CountriesDFx %>%
+  group_by(Axis, BasinID2, Country) %>%
+  summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity))
+
+ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
+  geom_point() ### this is nice, how to get sync values between 0 and 1?
+
+ggplot(CountriesDFx, aes(x=Similarity, y=Correlation, color = Axis)) + 
+  geom_point()
+
+filter(mean_sync, Mean_Sim <=0.25)
+filter(mean_sync, Mean_Sim >=0.75)
+
+### basin synchrony and similarity (not binned by country)
+
+allDFx <- read.csv("output_data/04_basin_sync_data_similarity_euclidean_dist_all_together.csv")
+head(allDFx)
+
+mean_sync <- allDFx %>%
+  group_by(Axis, BasinID2) %>%
+  summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity))
+
+ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
+  geom_point() ### this is nice, how to get sync values between 0 and 1?
+
+ggplot(allDFx, aes(x=Similarity, y=Correlation, color = Axis)) + 
+  geom_point()
+
+filter(mean_sync, Mean_Sim <=0.25)
+filter(mean_sync, Mean_Sim >=0.75)
 
 ## distance matrix of site synchrony
 
