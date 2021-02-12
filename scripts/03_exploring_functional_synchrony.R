@@ -3,6 +3,8 @@
 library(tidyverse)
 library(tidylog)
 
+out.dir <- "/Users/katieirving/Documents/git/func_sync_emp/Figures/"
+
 ## questions
 ## How does it vary through space?
 ## What are the main drivers? - come back to this!
@@ -84,22 +86,46 @@ SimSync$basin_ID <- as.factor(SimSync$basin_ID)
 #   filter(Axis == "Axis1")
 
 ## figure shows fish size and reproduction overall synchrony in each basin
-ggplot(SimSync, aes(x=basin_ID, y=Correlation, fill=Axis)) + 
+b1 = ggplot(SimSync, aes(x=basin_ID, y=Correlation, fill=Axis)) + 
   geom_boxplot() +
+  # theme(axis.text.x = element_text(angle = 45)) +
   facet_wrap(~Country, scale="free") 
+
+file.name1 <- paste0(out.dir, "Between_site_sync_per_country.jpg")
+ggsave(b1, filename=file.name1, dpi=300, height=5, width=6)
 
 ## how many basins in each country
 
 basin_tally <- SimSync %>% group_by(Country) %>% count(basin_ID)
-
+basin_tally
 ## try one country
 
 Fra_sync <- SimSync %>%
   filter(Country == "FRA")
 
-ggplot(Fra_sync, aes(x=basin_ID, y=Correlation, fill=Axis)) + 
-  geom_boxplot()
+b1 <- ggplot(Fra_sync, aes(x=basin_ID, y=Correlation, fill=Axis)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  # scale_color_brewer(breaks = c("Axis1", "Axis2"),
+  #                    palette="Set1",
+  #                    labels = c("Fish Size", "Fish Reproductive Type"),
+  #                    name = "Functional Trait") 
+b1
 
+file.name1 <- paste0(out.dir, "France_between_site_sync.jpg")
+ggsave(b1, filename=file.name1, dpi=300, height=5, width=6)
+
+
+SWE_sync <- SimSync %>%
+  filter(Country == "SWE")
+
+b2 <- ggplot(SWE_sync, aes(x=basin_ID, y=Correlation, fill=Axis)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+b2
+
+file.name1 <- paste0(out.dir, "Sweden_between_site_sync.jpg")
+ggsave(b2, filename=file.name1, dpi=300, height=5, width=6)
 ## leave one out sync - does not work!!!
 # LOOsync
 # 
@@ -135,7 +161,7 @@ ggplot(Fra_sync, aes(x=Similarity, y=Correlation)) +
 ggplot(SimSync1, aes(x=Similarity, y=Correlation)) + 
   geom_point()
 
-## mean synchrony per site
+## mean synchrony per site with simialrity
 
 head(SimSync)
 
@@ -143,10 +169,65 @@ mean_sync <- SimSync %>%
   group_by(Axis, Site_ID2) %>%
   summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity))
 
-ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
+s1<- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
   geom_point() ### this is nice, how to get sync values between 0 and 1?
 
+file.name1 <- paste0(out.dir, "Mean_between_site_sync_all_sites_distance_similarity.jpg")
+ggsave(s1, filename=file.name1, dpi=300, height=5, width=6)
+
 head(mean_sync)
+
+## mean sync per site with temp cor
+
+TempSync <- read.csv("output_data/02_temp_sync_between_sites.csv")
+
+TempSync <- rename(TempSync, Pair = X, TempCor = Correlation)
+
+## make sync values wider and format for join
+
+SimSyncx <- SimSync %>%
+  select(-Pair, -X) %>%
+  pivot_wider(names_from = "Axis", values_from = Correlation) %>%
+  unite("Pair", Site_ID1:Site_ID2, remove = F, sep= ".") %>%
+  distinct()
+
+TempSync <- TempSync %>%
+  filter(Env_Var == "clim_max_raw")
+head(TempSync)
+
+AllSync <- full_join(TempSync[, c(1,3,5)], SimSyncx, by = "Pair")
+AllSync <- na.omit(AllSync)
+
+AllSync <- AllSync %>%
+  pivot_longer(Axis1:Axis2, names_to = "Axis", values_to = "Correlation")
+
+# unique(AllSync$Axis)
+
+
+mean_sync <- AllSync %>%
+group_by(Axis, Site_ID2) %>%
+  summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity), Mean_TempCor = mean(TempCor))
+unique(mean_sync$Axis)
+
+s1<- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
+  geom_point() ### this is nice, how to get sync values between 0 and 1?
+s1
+file.name1 <- paste0(out.dir, "Mean_between_site_sync_all_sites_distance_similarity.jpg")
+ggsave(s1, filename=file.name1, dpi=300, height=5, width=6)
+
+s2<- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_TempCor)) + 
+  geom_point() ### this is nice, how to get sync values between 0 and 1?
+s2
+
+file.name1 <- paste0(out.dir, "Mean_between_site_temp_sync_all_sites_distance_similarity.jpg")
+ggsave(s2, filename=file.name1, dpi=300, height=5, width=6)
+
+s3<- ggplot(mean_sync, aes(x=Mean_TempCor, y=Mean_Cor, color = Axis)) + 
+  geom_point() ### this is nice, how to get sync values between 0 and 1?
+s3
+
+file.name1 <- paste0(out.dir, "Mean_between_site_sync_temp_sync_all_sites.jpg")
+ggsave(s3, filename=file.name1, dpi=300, height=5, width=6)
 
 basins <- sync %>%
   dplyr::select(basin_ID, Country, Site_ID2) %>%
@@ -191,9 +272,12 @@ AllSync <- read.csv("output_data/02_between_basin_sync_all_together.csv")
 
 head(BasinSync)
 
-ggplot(BasinSync, aes(x=Country, y=Correlation, fill=Axis)) + 
+b3 <- ggplot(BasinSync, aes(x=Country, y=Correlation, fill=Axis)) + 
   geom_boxplot() +
   facet_wrap(~Axis, scale="free") 
+b3
+file.name1 <- paste0(out.dir, "Between_basin_sync_per_country.jpg")
+ggsave(b3, filename=file.name1, dpi=300, height=5, width=6)
 
 head(AllSync)
 
@@ -206,11 +290,19 @@ mean_sync <- CountriesDFx %>%
   group_by(Axis, BasinID2, Country) %>%
   summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity))
 
-ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
-  geom_point() ### this is nice, how to get sync values between 0 and 1?
+c1 <- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
+  geom_point() 
+c1
 
-ggplot(CountriesDFx, aes(x=Similarity, y=Correlation, color = Axis)) + 
+file.name1 <- paste0(out.dir, "Mean_basin_sync_per_country.jpg")
+ggsave(c1, filename=file.name1, dpi=300, height=5, width=6)
+
+c2 <- ggplot(CountriesDFx, aes(x=Similarity, y=Correlation, color = Axis)) + 
   geom_point()
+c2
+
+file.name1 <- paste0(out.dir, "Raw_basin_sync_per_country.jpg")
+ggsave(c2, filename=file.name1, dpi=300, height=5, width=6)
 
 filter(mean_sync, Mean_Sim <=0.25)
 filter(mean_sync, Mean_Sim >=0.75)
@@ -224,8 +316,12 @@ mean_sync <- allDFx %>%
   group_by(Axis, BasinID2) %>%
   summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity))
 
-ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
+g1 <- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
   geom_point() ### this is nice, how to get sync values between 0 and 1?
+g1
+
+file.name1 <- paste0(out.dir, "Mean_basin_sync_global.jpg")
+ggsave(g1, filename=file.name1, dpi=300, height=5, width=6)
 
 ggplot(allDFx, aes(x=Similarity, y=Correlation, color = Axis)) + 
   geom_point()
