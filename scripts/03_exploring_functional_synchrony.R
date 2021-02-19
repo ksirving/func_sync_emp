@@ -265,7 +265,7 @@ head(data)
 heatmap(data)
 head(SimSync)
 
-## plot between site synchrony
+## plot between basin synchrony
 
 BasinSync <- read.csv("output_data/02_between_basin_sync_per_country.csv")
 AllSync <- read.csv("output_data/02_between_basin_sync_all_together.csv")

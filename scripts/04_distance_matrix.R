@@ -23,12 +23,11 @@ head(fish_ab)
 
 # within basin  -----------------------------------------------------------
 
-
 ## define pairs
 sync <- sync %>%
   rename(Pair = X) %>%
-  mutate(Euclid_Dist_Meters = NA, Similarity = NA)
-
+  mutate(Euclid_Dist_Meters = NA, Similarity = NA, MeanLat = NA, MeanLon = NA)
+head(sync)
 pairs <- unique(sync$Pair)
 
 ## get coords
@@ -64,8 +63,16 @@ for(p in 1:length(pairs)) {
   #Make a distance matrix 
   dst <- pointDistance(CoordsS1,CoordsS2, lonlat=TRUE)
 
+  # get mean latitude/longitude
+  MeanLat <- (CoordsS1$Latitude+CoordsS2$Latitude)/2
+  MeanLon <- (CoordsS1$Longitude+CoordsS2$Longitude)/2
+  
+  ## add to dataframe
+
   ## add to dataframe
   sync[p,8] <- dst
+  sync[p,10] <- MeanLat
+  sync[p,11] <- MeanLon
  
 
 }
@@ -217,17 +224,25 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
     sp::coordinates(CoordsS1) <- c("Longitude", "Latitude")
     sp::coordinates(CoordsS2) <- c("Longitude", "Latitude")
     
+    # get mean latitude/longitude
+    MeanLat <- (CoordsS1$Latitude+CoordsS2$Latitude)/2
+    MeanLon <- (CoordsS1$Longitude+CoordsS2$Longitude)/2
+    
+   
     #Make a distance matrix 
     dst <- pointDistance(CoordsS1,CoordsS2, lonlat=TRUE)
     
     ## add to dataframe
     BasinSync[p,7] <- dst
-    
+    BasinSync[p,8] <- MeanLat
+    BasinSync[p,9] <- MeanLon
     
   }
   
   head(BasinSync)
   colnames(BasinSync)[7] <- "Euclid_Dist_Meters"
+  colnames(BasinSync)[8] <- "MeanLat"
+  colnames(BasinSync)[9] <- "MeanLon"
   
   ## convert to similarities
   
@@ -307,17 +322,28 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
     sp::coordinates(CoordsS1) <- c("Longitude", "Latitude")
     sp::coordinates(CoordsS2) <- c("Longitude", "Latitude")
     
+    
+    # get mean latitude/longitude
+    MeanLat <- (CoordsS1$Latitude+CoordsS2$Latitude)/2
+    MeanLon <- (CoordsS1$Longitude+CoordsS2$Longitude)/2
+    
+    
     #Make a distance matrix 
     dst <- pointDistance(CoordsS1,CoordsS2, lonlat=TRUE)
     
     ## add to dataframe
     BasinSync[p,6] <- dst
+    BasinSync[p,7] <- MeanLat
+    BasinSync[p,8] <- MeanLon
     
     
   }
   
   head(BasinSync)
+
   colnames(BasinSync)[6] <- "Euclid_Dist_Meters"
+  colnames(BasinSync)[7] <- "MeanLat"
+  colnames(BasinSync)[8] <- "MeanLon"
   
   ## convert to similarities
   
@@ -335,4 +361,6 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   
   write.csv(BasinsDF, "output_data/04_basin_sync_data_similarity_euclidean_dist_all_together.csv")
   
- 
+
+
+

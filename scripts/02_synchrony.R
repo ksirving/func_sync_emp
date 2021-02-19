@@ -418,6 +418,10 @@ load(file= "/Users/katieirving/Documents/git/func_sync_emp/output_data/01_708004
     
     write.csv(synchrony_axis, "output_data/02_between_basin_sync_all_together.csv")  
     
+
+# Environmental Synchrony -------------------------------------------------
+
+    
     ## synchrony between temp/sites
     
     ## temp data
@@ -508,5 +512,247 @@ load(file= "/Users/katieirving/Documents/git/func_sync_emp/output_data/01_708004
     range(synchrony_axis$Correlation)
     
     write.csv(synchrony_axis, "output_data/02_temp_sync_between_sites.csv")
-    ### between basin synchrony leave one out
+
+    
+    ## synchrony between flow/sites
+    
+    ## flow data
+    
+    load(file="output_data/flow_data_melt_raw_new_sites.RData")
+    head(melt_flow_raw)
+    
+    sites <- pca_scores %>%
+      select(site, HydroBasin, Country) %>%
+      rename(SiteID = site) %>%
+      distinct()
+    
+    head(sites)
+    
+    flow_sites <- full_join(melt_flow_raw, sites, by="SiteID")
+    flow_sites <- na.omit(flow_sites)
+    
+    basinsID<-unique(flow_sites$HydroBasin) # 43 basins
+    # Nbasins<-length(unique(pca_basins$HydroBasin))
+    
+    nlevels(factor(flow_sites$HydroBasin)) 
+    synchrony_axis = NULL
+    # basin = 13
+    
+    for (basin in 1:length(basinsID)) {
+      basindata<-flow_sites[flow_sites$HydroBasin==basinsID[basin],]
+      head(basindata)
+      #//////////////////////////////////////////////////////
+      #data preparation
+      #/////////////////////////////////////////////////////
+      
+      
+      Nvar <- unique(basindata$env_var)
+      
+      for(ax in 1: length(Nvar)) {
+        
+        axis_data<-basindata[basindata$env_var==unique(basindata$env_var)[ax],]
+        years <- unique(sort(axis_data$year)) ## define years for columns
+        
+        # make df wide
+        axis_data  <- axis_data %>% 
+          # dplyr::select(-c(site_year) ) %>%
+          spread(SiteID, Flow) #%>%
+        # head(axis_data)
+        # flip data
+        axis_data <- t(axis_data)[-c(1:4),]
+        
+        # define rows and column names and convert to numbers
+        sitesIDs<-rownames(axis_data)
+        colnames(axis_data) <- years
+        axis_data<-apply(axis_data, 2, as.numeric)
+        rownames(axis_data)<-sitesIDs
+        
+        # change NAs to zero - can change later if needed
+        axis_data[which(is.na(axis_data))] <- 0
+        
+        ### synchrony
+        correlation<-cor(t(axis_data), use = "pairwise.complete.obs")
+        head(correlation)
+        write.csv(correlation, paste("output_data/cor_matrix/02_flow_site_sync_", basinsID[basin], 
+                                     "_", Nvar[ax], ".csv", sep=""))
+        
+        vector_data_correl<- unmatrix(correlation,byrow=F)
+        lower_triangle<-lower.tri(correlation)
+        vector_data_triangle<-unmatrix(lower_triangle, byrow=F)
+        correl_result<-vector_data_correl[vector_data_triangle]
+        site_ID1<-sapply(strsplit(names(correl_result),":"),'[',1)
+        site_ID2<-sapply(strsplit(names(correl_result),":"),'[',2)
+        # correl_result
+        synchrony_axis<-rbind(synchrony_axis, cbind(basinsID[basin], 
+                                                    as.character(unique(basindata$env_va)[ax]),
+                                                    basindata$Country[1],
+                                                    correl_result,site_ID1,site_ID2))
+        
+      }
+      
+      
+    }
+    
+    
+    
+    head(synchrony_axis) 
+    warnings()
+    synchrony_axis<-data.frame(synchrony_axis)
+    colnames(synchrony_axis)<-c("basin_ID", "Env_Var","Country", "Correlation","Site_ID1","Site_ID2")
+    nlevels(factor(synchrony_axis$basin_ID)) # 43
+    nlevels(factor(synchrony_axis$Env_Var)) # 3
+    range(na.omit(synchrony_axis$Correlation))
+    
+    
+    write.csv(synchrony_axis, "output_data/02_flow_sync_between_sites.csv")
+    
+    
+
+# between basin synchrony - environmental vars ----------------------------
+
+    ## centroid of basin
+    
+    load(file="output_data/clim_data_melt_raw_new_sites.RData")
+    head(melt_clim_raw)
+    
+    head(pca_scores)
+    ## get sites
+    sites <- pca_scores %>%
+      select(site, HydroBasin, Country) %>%
+      rename(SiteID = site) %>%
+      distinct()
+    
+    head(sites)
+    
+    ## join with temp data
+    clim_sites <- full_join(melt_clim_raw, sites, by="SiteID")
+    clim_sites <- na.omit(clim_sites)
+    
+    clim_means <-clim_sites %>%
+      group_by(HydroBasin, env_var, year, Country) %>%
+      summarise(BasinCentroidYear = mean(Temp))
+    
+    envs <- unique(clim_sites$env_var)
+    
+    head(clim_means)
+    synchrony_axis = NULL
+    e
+    e=1
+    for (e in 1:length(envs)) {
+      
+      env_data<-clim_means[clim_means$env_var==unique(clim_means$env_var)[e],]
+      years <- unique(sort(env_data$year)) ## define years for columns
+      # years
+      # make df wide
+      env_data  <- env_data %>% 
+        dplyr::select(-c(Country) ) %>%
+        spread(HydroBasin, BasinCentroidYear) #%>%
+      # head(env_data)
+      # flip data
+      env_data <- t(env_data)[-c(1:3),]
+      
+      # define rows and column names and convert to numbers
+      sitesIDs<-rownames(env_data)
+      colnames(env_data) <- years
+      env_data<-apply(env_data, 2, as.numeric)
+      rownames(env_data)<-sitesIDs
+      
+      # change NAs to zero - can change later if needed
+      env_data[which(is.na(env_data))] <- 0
+      
+      ### synchrony
+      correlation<-cor(t(env_data), use = "pairwise.complete.obs")
+      head(correlation)
+      vector_data_correl<- unmatrix(correlation,byrow=F)
+      lower_triangle<-lower.tri(correlation)
+      vector_data_triangle<-unmatrix(lower_triangle, byrow=F)
+      correl_result<-vector_data_correl[vector_data_triangle]
+      Basin_ID1<-sapply(strsplit(names(correl_result),":"),'[',1)
+      Basin_ID2<-sapply(strsplit(names(correl_result),":"),'[',2)
+      correl_result
+      synchrony_axis<-rbind(synchrony_axis, cbind(as.character(unique(clim_means$env_var)[e]),
+                                                  correl_result,Basin_ID1,Basin_ID2))
+    }
+    
+    synchrony_axis<-data.frame(synchrony_axis)
+    head(synchrony_axis)
+    dim(synchrony_axis)
+    colnames(synchrony_axis)<-c("EnvVar", "Correlation","BasinID1","BasinID2")
+    
+    write.csv(synchrony_axis, "output_data/02_between_basin_sync_temp_all_together.csv")  
+    
+  #### flow 
+    ###################
+    
+    ## centroid of basin
+    
+    load(file="output_data/flow_data_melt_raw_new_sites.RData")
+    head(melt_flow_raw)
+    
+    head(pca_scores)
+    ## get sites
+    sites <- pca_scores %>%
+      select(site, HydroBasin, Country) %>%
+      rename(SiteID = site) %>%
+      distinct()
+    
+    head(sites)
+    
+    ## join with temp data
+    flow_sites <- full_join(melt_flow_raw, sites, by="SiteID") ### some sites don't match
+    flow_sites <- na.omit(flow_sites)
+    
+    flow_means <-flow_sites %>%
+      group_by(HydroBasin, env_var, year, Country) %>%
+      summarise(BasinCentroidYear = mean(Flow))
+    
+    envs <- unique(flow_sites$env_var)
+    
+    head(flow_means)
+    synchrony_axis = NULL
+    
+    e
+    e=1
+    for (e in 1:length(envs)) {
+      
+      env_data<-flow_means[flow_means$env_var==unique(flow_means$env_var)[e],]
+      years <- unique(sort(env_data$year)) ## define years for columns
+      # years
+      # make df wide
+      env_data  <- env_data %>% 
+        dplyr::select(-c(Country) ) %>%
+        spread(HydroBasin, BasinCentroidYear) #%>%
+      # head(env_data)
+      # flip data
+      env_data <- t(env_data)[-c(1:3),]
+      
+      # define rows and column names and convert to numbers
+      sitesIDs<-rownames(env_data)
+      colnames(env_data) <- years
+      env_data<-apply(env_data, 2, as.numeric)
+      rownames(env_data)<-sitesIDs
+      
+      # change NAs to zero - can change later if needed
+      env_data[which(is.na(env_data))] <- 0
+      
+      ### synchrony
+      correlation<-cor(t(env_data), use = "pairwise.complete.obs")
+      head(correlation)
+      vector_data_correl<- unmatrix(correlation,byrow=F)
+      lower_triangle<-lower.tri(correlation)
+      vector_data_triangle<-unmatrix(lower_triangle, byrow=F)
+      correl_result<-vector_data_correl[vector_data_triangle]
+      Basin_ID1<-sapply(strsplit(names(correl_result),":"),'[',1)
+      Basin_ID2<-sapply(strsplit(names(correl_result),":"),'[',2)
+      correl_result
+      synchrony_axis<-rbind(synchrony_axis, cbind(as.character(unique(flow_means$env_var)[e]),
+                                                  correl_result,Basin_ID1,Basin_ID2))
+    }
+    
+    synchrony_axis<-data.frame(synchrony_axis)
+    head(synchrony_axis)
+    dim(synchrony_axis)
+    colnames(synchrony_axis)<-c("EnvVar", "Correlation","BasinID1","BasinID2")
+    
+    write.csv(synchrony_axis, "output_data/02_between_basin_sync_flow_all_together.csv") 
     
