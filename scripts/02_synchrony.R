@@ -25,7 +25,7 @@ head(originaldata)
 ## upload pca scores for synchrony
 
 pca_scores <- read.csv("output_data/01_trait_pca_scores_new_sites.csv")
-
+head(pca_scores)
 ## which axis?
 ## dimension 1 explains 54.4%
 ## traits that describe fish size are along this axis, e.g. eggsize, max length, age at maturity etc
@@ -148,6 +148,78 @@ write.csv(synchrony_axis, "output_data/02_results_between_site_synchrony_Jan2020
 # synchrony_axis <- read.csv("output_data/02_results_between_site_synchrony.csv")
 synchrony_axis
 ## plot synchrony
+
+
+# synchrony between sites no basins ---------------------------------------
+
+pca_sites <- pca_scores %>%
+  # group_by(HydroBasin) %>%
+  rename(site_year = X)
+head(pca_sites)
+### loop over axis
+Naxis<-c("Axis1", "Axis2")
+
+basindata_melt <- pca_sites  %>%
+  reshape2::melt(id= c("site_year", "HydroBasin", "Country", "site", "year")) %>%
+  rename(axis=variable, score = value)
+
+synchrony_axis = NULL
+
+
+  for (ax in 1: length(Naxis)) {
+    axis_data<-basindata_melt[basindata_melt$axis==unique(basindata_melt$axis)[ax],]
+    
+    years <- unique(sort(axis_data$year)) ## define years for columns
+    years
+    # make df wide
+    axis_data  <- axis_data %>% 
+      dplyr::select(-c(site_year, HydroBasin, Country) ) %>%
+      spread(site, score) #%>%
+    
+    # flip data
+    axis_data <- t(axis_data)[-c(1:4),]
+    head(axis_data)
+    
+    # define rows and column names and convert to numbers
+    sitesIDs<-rownames(axis_data)
+    colnames(axis_data) <- years
+    axis_data<-apply(axis_data, 2, as.numeric)
+    rownames(axis_data)<-sitesIDs
+    
+    # change NAs to zero - can change later if needed
+    axis_data[which(is.na(axis_data))] <- 0
+    
+    ### synchrony
+    correlation<-cor(t(axis_data), use = "pairwise.complete.obs")
+    # head(correlation)
+    # write.csv(correlation, paste("output_data/cor_matrix/02_site_sync_", basinsID[basin], 
+                                 # "_", Naxis[ax], ".csv", sep=""))
+    
+    vector_data_correl<- unmatrix(correlation,byrow=F)
+    lower_triangle<-lower.tri(correlation)
+    vector_data_triangle<-unmatrix(lower_triangle, byrow=F)
+    correl_result<-vector_data_correl[vector_data_triangle]
+    site_ID1<-sapply(strsplit(names(correl_result),":"),'[',1)
+    site_ID2<-sapply(strsplit(names(correl_result),":"),'[',2)
+    # correl_result
+    synchrony_axis<-rbind(synchrony_axis, cbind(as.character(unique(basindata_melt$axis)[ax]),
+                                                correl_result,site_ID1,site_ID2))
+  }
+
+head(synchrony_axis)
+warnings()
+synchrony_axis<-data.frame(synchrony_axis)
+colnames(synchrony_axis)<-c("Axis","Correlation","Site_ID1","Site_ID2")
+nlevels(factor(synchrony_axis$basin_ID)) # 43
+nlevels(factor(synchrony_axis$Axis)) # 2
+
+
+###save results
+write.csv(synchrony_axis, "output_data/02_results_between_site_synchrony_Feb2020_no_boundaries.csv")
+# synchrony_axis <- read.csv("output_data/02_results_between_site_synchrony.csv")
+synchrony_axis
+## plot synchrony
+
 
 
 # Leaving one out synchrony -----------------------------------------------

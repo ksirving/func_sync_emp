@@ -49,7 +49,7 @@ b1 = ggplot(SimSync, aes(x=basin_ID, y=Correlation, fill=Axis)) +
   geom_boxplot() +
   # theme(axis.text.x = element_text(angle = 45)) +
   facet_wrap(~Country, scale="free") 
-
+b1
 file.name1 <- paste0(out.dir, "Between_site_sync_per_country.jpg")
 ggsave(b1, filename=file.name1, dpi=300, height=5, width=6)
 
@@ -100,8 +100,9 @@ mean_sync <- SimSync %>%
   summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity))
 
 s1<- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
-  geom_point() ### this is nice, how to get sync values between 0 and 1?
-
+  geom_point() +
+  scale_y_continuous(name="Mean Synchrony", limits=c(-1, 1))### this is nice, how to get sync values between 0 and 1?
+s1
 file.name1 <- paste0(out.dir, "Mean_between_site_sync_all_sites_distance_similarity.jpg")
 ggsave(s1, filename=file.name1, dpi=300, height=5, width=6)
 
@@ -139,14 +140,16 @@ mean_sync <- AllSync %>%
 unique(mean_sync$Axis)
 
 s1<- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
-  geom_point() ### this is nice, how to get sync values between 0 and 1?
+  geom_point() +
+  scale_y_continuous(name="Mean Synchrony", limits=c(-1, 1))### this is nice, how to get sync values between 0 and 1?
 s1
 file.name1 <- paste0(out.dir, "Mean_between_site_sync_all_sites_distance_similarity.jpg")
 ggsave(s1, filename=file.name1, dpi=300, height=5, width=6)
 
 
 s3<- ggplot(mean_sync, aes(x=Mean_TempCor, y=Mean_Cor, color = Axis)) + 
-  geom_point() ### this is nice, how to get sync values between 0 and 1?
+  geom_point() +
+  scale_y_continuous(name="Mean Temp Synchrony", limits=c(-1, 1))### this is nice, how to get sync values between 0 and 1?
 s3
 
 file.name1 <- paste0(out.dir, "Mean_between_site_sync_temp_sync_all_sites.jpg")
@@ -158,8 +161,8 @@ ggsave(s3, filename=file.name1, dpi=300, height=5, width=6)
 
 mean_sync <- SimSync %>%
   group_by(Axis, Site_ID2) %>%
-  summarise(Mean_Cor = mean(Correlation), Mean_Dist = mean(Euclid_Dist_Meters))
-
+  summarise(Mean_Cor = mean(Correlation), Mean_Dist = mean(Euclid_Dist_Meters), Mean_Lat =mean(MeanLat))
+head(mean_sync)
 range(mean_sync$Mean_Dist)
 
 s1<- ggplot(mean_sync, aes(x=Mean_Dist, y=Mean_Cor, color = Axis)) + ### this is nice
@@ -170,6 +173,16 @@ s1<- ggplot(mean_sync, aes(x=Mean_Dist, y=Mean_Cor, color = Axis)) + ### this is
 s1
 file.name1 <- paste0(out.dir, "Mean_between_site_sync_all_sites_distance_raw.jpg")
 ggsave(s1, filename=file.name1, dpi=300, height=5, width=6)
+
+
+s2<- ggplot(mean_sync, aes(x=Mean_Lat, y=Mean_Cor, color = Axis)) + ### this is nice
+  geom_point() +
+  scale_x_continuous(name="Mean Latitude") +
+  scale_y_continuous(name="Mean Synchrony", limits=c(-1, 1))
+
+s2
+file.name1 <- paste0(out.dir, "Mean_between_site_sync_all_sites_latitude.jpg")
+ggsave(s2, filename=file.name1, dpi=300, height=5, width=6)
 
 head(mean_sync)
 
@@ -278,17 +291,17 @@ ggsave(s2, filename=file.name1, dpi=300, height=5, width=6)
 
 ## plot between basin synchrony
 
-BasinSync <- read.csv("output_data/02_between_basin_sync_per_country.csv")
+# BasinSync <- read.csv("output_data/02_between_basin_sync_per_country.csv")
 AllSync <- read.csv("output_data/02_between_basin_sync_all_together.csv")
 
-head(BasinSync)
-
-b3 <- ggplot(BasinSync, aes(x=Country, y=Correlation, fill=Axis)) + 
-  geom_boxplot() +
-  facet_wrap(~Axis, scale="free") 
-b3
-file.name1 <- paste0(out.dir, "Between_basin_sync_per_country.jpg")
-ggsave(b3, filename=file.name1, dpi=300, height=5, width=6)
+# head(BasinSync)
+# 
+# b3 <- ggplot(BasinSync, aes(x=Country, y=Correlation, fill=Axis)) + 
+#   geom_boxplot() +
+#   facet_wrap(~Axis, scale="free") 
+# b3
+# file.name1 <- paste0(out.dir, "Between_basin_sync_per_country.jpg")
+# ggsave(b3, filename=file.name1, dpi=300, height=5, width=6)
 
 head(AllSync)
 
@@ -302,14 +315,16 @@ mean_sync <- CountriesDFx %>%
   summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity))
 
 c1 <- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
-  geom_point() 
+  geom_point() +
+  scale_y_continuous(name="Mean Synchrony", limits=c(-1, 1))
 c1
 
 file.name1 <- paste0(out.dir, "Mean_basin_sync_per_country.jpg")
 ggsave(c1, filename=file.name1, dpi=300, height=5, width=6)
 
 c2 <- ggplot(CountriesDFx, aes(x=Similarity, y=Correlation, color = Axis)) + 
-  geom_point()
+  geom_point() +
+  scale_y_continuous(name="Mean Synchrony", limits=c(-1, 1))
 c2
 
 file.name1 <- paste0(out.dir, "Raw_basin_sync_per_country.jpg")
@@ -328,7 +343,8 @@ mean_sync <- allDFx %>%
   summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity))
 
 g1 <- ggplot(mean_sync, aes(x=Mean_Sim, y=Mean_Cor, color = Axis)) + 
-  geom_point() ### this is nice, how to get sync values between 0 and 1?
+  geom_point() +
+  scale_y_continuous(name="Mean Synchrony", limits=c(-1, 1))### this is nice, how to get sync values between 0 and 1?
 g1
 
 file.name1 <- paste0(out.dir, "Mean_basin_sync_global.jpg")
@@ -395,6 +411,99 @@ ggplot(allDFx, aes(x=Euclid_Dist_Meters, y=Correlation, color = Axis)) +
 filter(mean_sync, Mean_Sim <=0.25)
 filter(mean_sync, Mean_Sim >=0.75)
 
+### temp basin sync
+TempSync <- read.csv("output_data/02_between_basin_sync_temp_all_together.csv")
+
+FlowSync <- read.csv("output_data/02_between_basin_sync_flow_all_together.csv")
+head(TempSync)
+head(FlowSync)
+
+allDFx <- read.csv("output_data/04_basin_sync_data_similarity_euclidean_dist_all_together.csv")
+head(allDFx)
+
+## format dfs
+TempSync <- TempSync %>%
+  dplyr::select(-X) %>%
+  filter(EnvVar == "clim_max_raw") %>%
+  rename(TempCor = Correlation) %>%
+  unite("Pair", BasinID1:BasinID2, remove = F, sep= ".") %>%
+  distinct()
+
+FlowSync <- FlowSync %>%
+  dplyr::select(-X) %>%
+  filter(EnvVar == "qmax_raw") %>%
+  rename(FlowCor = Correlation) %>%
+  unite("Pair", BasinID1:BasinID2, remove = F, sep= ".") %>%
+  distinct()
+
+
+allDFx <- allDFx %>%
+  dplyr::select( -X, -BasinPairs) %>%
+  rename(BasinCor = Correlation) %>%
+  pivot_wider(names_from = "Axis", values_from = BasinCor) %>%
+    unite("Pair", BasinID1:BasinID2, remove = F, sep= ".")
+
+
+head(allDFx)
+head(TempSync)
+head(FlowSync)
+
+## join DFs
+AllSync <- full_join(TempSync[, c(2,3)], allDFx, by = "Pair")
+AllSync <- full_join(FlowSync[, c(2,3)], AllSync, by = "Pair")
+AllSync <- na.omit(AllSync)
+head(AllSync)
+
+AllSync <- AllSync %>%
+  pivot_longer(c(Axis1:Axis2, FlowCor, TempCor), names_to = "Variable", values_to = "Correlation") #%>%
+  # dplyr::select(Euclid_Dist_Meters, MeanLat, Variable, Correlation)
+
+## figures raw sync values (not summarised)
+names(AllSync)
+
+b1 <- ggplot(AllSync, aes(x=Euclid_Dist_Meters, y=Correlation, color = Variable)) +
+  geom_point() +
+  scale_x_continuous(name="Euclid_Dist_Meters") +
+  scale_y_continuous(name="Synchrony", limits=c(-1, 1))
+b1
+
+b2 <- ggplot(AllSync, aes(x=MeanLat, y=Correlation, color = Variable)) +
+  geom_point() +
+  scale_x_continuous(name="MeanLat") +
+  scale_y_continuous(name="Synchrony", limits=c(-1, 1))
+b2
+
+
+head(AllSync)
+
+AllSyncWide <- AllSync %>%
+  pivot_wider(names_from = "Variable", values_from = "Correlation")
+
+head(AllSyncWide)
+names(AllSyncWide)
+mean_sync <- AllSync %>%
+  group_by(Variable, BasinID2) %>%
+  summarise(Mean_Cor = mean(Correlation), Mean_Sim = mean(Similarity), 
+            Mean_Dist = mean(Euclid_Dist_Meters), Mean_Lat = mean(MeanLat))
+head(mean_sync)
+
+b1 <- ggplot(mean_sync, aes(x=Mean_Dist, y=Mean_Cor, color = Variable)) +
+  geom_point() +
+  scale_x_continuous(name="Mean Euclid Dist Meters") +
+  scale_y_continuous(name="Synchrony", limits=c(-1, 1))
+b1
+
+file.name1 <- paste0(out.dir, "Mean_basin_sync_func_temp_flow_global_raw_distance.jpg")
+ggsave(b1, filename=file.name1, dpi=300, height=5, width=6)
+
+b2 <- ggplot(mean_sync, aes(x=Mean_Lat, y=Mean_Cor, color = Variable)) +
+  geom_point() +
+  scale_x_continuous(name="Mean Lat") +
+  scale_y_continuous(name="Synchrony", limits=c(-1, 1))
+b2
+
+file.name1 <- paste0(out.dir, "Mean_basin_sync_func_temp_flow_global_mean_lat.jpg")
+ggsave(b2, filename=file.name1, dpi=300, height=5, width=6)
 
 # All data one figure -----------------------------------------------------
 
