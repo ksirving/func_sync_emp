@@ -286,6 +286,40 @@ s2
 file.name1 <- paste0(out.dir, "Mean_between_site_flow_sync_all_sites_distance_raw.jpg")
 ggsave(s2, filename=file.name1, dpi=300, height=5, width=6)
 
+###
+
+SimSyncNB <- read.csv("output_data/04_sync_data_similarity_euclidean_dist_no_boundaries.csv")
+head(SimSyncNB)
+dim(SimSyncNB)
+SimSyncNB <- na.omit(SimSyncNB) ### check these NAs later!!!!
+ 
+sum(is.na(SimSyncNB))
+mean_sync <- SimSyncNB %>%
+  group_by(Axis, Site_ID2) %>%
+  summarise(Mean_Cor = mean(Correlation), Mean_Dist = mean(Euclid_Dist_Meters), Mean_Lat =mean(MeanLat))
+head(mean_sync)
+range(mean_sync$Mean_Dist)
+
+s1<- ggplot(mean_sync, aes(x=Mean_Dist, y=Mean_Cor, color = Axis)) + 
+  geom_point() +
+  scale_x_continuous(name="Mean Eucliean Distance (m)") +
+  scale_y_continuous(name="Mean Synchrony", limits=c(-1, 1))
+
+s1
+file.name1 <- paste0(out.dir, "Mean_between_site_sync_all_sites_distance_raw_no_boundaries.jpg")
+ggsave(s1, filename=file.name1, dpi=300, height=5, width=6)
+
+
+s2<- ggplot(mean_sync, aes(x=Mean_Lat, y=Mean_Cor, color = Axis)) + ### this is nice
+  geom_point() +
+  scale_x_continuous(name="Mean Latitude") +
+  scale_y_continuous(name="Mean Synchrony", limits=c(-1, 1))
+
+s2
+file.name1 <- paste0(out.dir, "Mean_between_site_sync_all_sites_latitude_no_boundaries.jpg")
+ggsave(s2, filename=file.name1, dpi=300, height=5, width=6)
+
+head(mean_sync)
 
 # Between Basin Synchrony -------------------------------------------------
 
