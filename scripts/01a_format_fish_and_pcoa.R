@@ -7,6 +7,7 @@ library(reshape2)
 library(tidyr)
 library(dplyr)
 library(ade4)
+library(cluster)
 ## upload fish abundance data
 setwd("/Users/katieirving/Documents/git/func_sync_emp")
 
@@ -44,7 +45,6 @@ fish_ab_rel <- fish_ab %>%
   mutate(TotalAbundanceSiteSpecies = sum(Abundance)) ## abundance of each species at each site
 #%>%
 
-### convert densoties to rel abundance
 
 fish_ab_rel <- fish_ab_rel %>%
   ungroup() %>%
@@ -70,44 +70,8 @@ rare_species <- trt %>%
 
 RSp <- rare_species$Species
 RSp
-# [1] "Barbatula quignardi"     "Etheostoma tennesseense" "Gobio occitaniae"       
-# [4] "Leuciscus burdigalensis" "Notropis wickliffi"      "Pachychilon pictum"     
-# [7] "Percina williamsi"       "Phoxinus bigerri"        "Squalius laietanus" 
-# 
-# ## check species are only 5% of abundance at site/year
-# 
-# head(fish_ab_rel)
-# length(unique(fish_ab_rel$Species))
-# 
-# fish_ab_rel_rare <- fish_ab_rel %>%
-#   filter(Species %in% RSp)
-# ## save
-# write.csv(fish_ab_rel_rare, "output_data/01_species_rel_adundance_2_or_less_traits.csv")
-# 
-# rare_species <- rare_species %>% 
-#   filter(Species %in% fish_ab_rel_rare$Species)
-# 
-# write.csv(rare_species, "output_data/01_species_traits_2_or_less_traits.csv")
-#   
-# rare_species
-# unique(fish_ab_rel_rare$Species) ## "Squalius laietanus" "Phoxinus bigerri"   "Gobio occitaniae"   "Notropis wickliffi"
-# 
-# # [1] "Squalius laietanus"      "Phoxinus bigerri"        "Barbatula quignardi"    
-# # [4] "Leuciscus burdigalensis" "Pachychilon pictum"      "Gobio occitaniae"       
-# # [7] "Notropis wickliffi" 
-# 
-# ## tally number of basins and number of sites fish with fewer traits occur
-# fish_ab_rel_rare$HydroBasin <- as.character(fish_ab_rel_rare$HydroBasin)
-# ?tally
-# 
-# SiteTally <- fish_ab_rel_rare %>%
-#   group_by(Species, HydroBasin) %>%
-#   summarise(No_Sites = length(unique(SiteID)))# %>%
-#   # summarise(No_basins = length(unique(HydroBasin))) #%>% ## number of basins species occurs
-# SiteTally
-# write.csv(SiteTally, "output_data/01_no_sites_basins_2_or_less_traits.csv")
 
-## remove rare species from main df
+## remove rare species (species with 2 or less traits) from main df
 
 fish_ab_rel <- fish_ab_rel %>%
   filter(!Species %in% RSp)
@@ -119,10 +83,53 @@ fish_sp
 trt <- trt %>%
   filter(Species %in% fish_sp)
 
-# log the fecundity trait
-trt$AVG_FECUND<-log(trt$AVG_FECUND)
-
 ### check distribution of traits and transform
+hist(log(trt$AVG_MXL)+1) ## skewed
+hist(log(trt$AVG_LMAT)+1) ## skewed
+hist(log(trt$AVG_AGEMAT)+1) ## skewed
+hist(log(trt$AVG_LONGY)+1) ## skewed
+hist(log(trt$AVG_FECUND)+1) ## skewed
+hist(trt$AVG_EGGSIZE) ## less skewed - do we want to transform this one?
+## some transformations not quite normal
+
+head(trt)
+# log traits
+
+trt$AVG_MXL<-log(trt$AVG_MXL)
+trt$AVG_LMAT<-log(trt$AVG_LMAT)
+trt$AVG_AGEMAT<-log(trt$AVG_AGEMAT)
+trt$AVG_LONGY<-log(trt$AVG_LONGY)
+trt$AVG_FECUND<-log(trt$AVG_FECUND)
+trt$AVG_EGGSIZE<-log(trt$AVG_EGGSIZE)
+
+## rank reproductive guild
+
+unique(trt$AVG_RGUILD)
+
+# NG = non guarders
+# OS = Open substrate
+# NS = Nest Spawners
+# G = Guarders
+# BH = brood hiders
+# SC = Substrate choosers
+
+# "NG_OS"  non guarder, open substrate
+# "NG_BH"  non guarders, brood hiders
+# "G_SC"   guarder, substare chooser
+# "G_NS"   guarder,  nest spawners
+# "Bearer"
+
+## put in correct order
+trt <- trt %>%
+  mutate(AVG_RGUILD_ORD = NA) %>%
+  mutate(AVG_RGUILD_ORD = replace(AVG_RGUILD_ORD, AVG_RGUILD == "Bearer", 5)) %>%
+  mutate(AVG_RGUILD_ORD = replace(AVG_RGUILD_ORD, AVG_RGUILD == "G_NS", 4)) %>%
+  mutate(AVG_RGUILD_ORD = replace(AVG_RGUILD_ORD, AVG_RGUILD == "G_SC", 3)) %>%
+  mutate(AVG_RGUILD_ORD = replace(AVG_RGUILD_ORD, AVG_RGUILD == "NG_BH", 2)) %>%
+  mutate(AVG_RGUILD_ORD = replace(AVG_RGUILD_ORD, AVG_RGUILD == "NG_OS", 1)) %>%
+  select(-AVG_RGUILD)
+
+head(trt)
 
 # check the matchin of spp
 setdiff(trt$Species, fish_ab_rel$Species)
@@ -134,21 +141,21 @@ fish_ab_rel$HydroBasin<-as.factor(fish_ab_rel$HydroBasin)
 
 
 # add variable that gives unique id based on site, season and year
-head(fish_ab_rel)
-length(unique(fish_ab_rel$Species)) ## 232
-dim(trt) ## 229
+# head(fish_ab_rel)
+# length(unique(fish_ab_rel$Species)) ## 232
+# dim(trt) ## 232
 fish_ab2 <- fish_ab_rel
 fish_ab2$site_seas_year<-paste(fish_ab2$SiteID, fish_ab2$Month,fish_ab2$Year, sep="_")
 #### just have a look
-fish_ab2 %>% 
-  filter(Species=="Esox lucius")
+# fish_ab2 %>% 
+#   filter(Species=="Esox lucius")
 ## some basins not havng season
 
 # convert to wide format
 #fish_mat<-dcast(fish_ab2, sYNGEO_ID  ~ Species, value.var="Abundances", fun.aggregate = sum)
 ## use reshape::dcast to convert to wide format using the "site_seas_y" variable as unique identified
-fish_mat2<-dcast(fish_ab2, site_seas_year  ~ Species, value.var="Abundance", fun.aggregate = sum)
-
+fish_mat2<-dcast(fish_ab2, site_seas_year  ~ Species, value.var="RelAbundanceSiteYear", fun.aggregate = sum)
+names(fish_ab2)
 # add  columns of year, site and seasons to the fish_mat2 matrix using "colsplit"
 # Some sites have NAs on season; season values with NAs are pasted but turned into character#
 fish_mat3<-cbind(colsplit(fish_mat2$site_seas_year,"_", c("site","month", "year")),fish_mat2)
@@ -179,14 +186,6 @@ head(fish_mat3) ### abundance of species per site year
 
 names(fish_mat3)
 
-## use gower here
-
-library(StatMatch)
-# install.packages("StatMatch")
-
-trt_gower <- gower.dist(trt[, 1:7], data.y=trt[, 1:7], rngs=NULL, KR.corr=TRUE, var.weights = NULL)
-head(trt_gower)
-dim(trt_gower)
 # create a "clean" df (called fish for traits "fish_fortr") with fish abundance for the functcomp command (weighting traits by spp relative abund)
 fish_fortrt<-fish_mat3[,c(5:236)]  
 row.names(fish_fortrt)<-fish_mat3$site_year
@@ -200,26 +199,44 @@ trt_matrix<-functcomp(trt, as.matrix(fish_fortrt), CWM.type = "all")
 head(trt_matrix)
 
 sum(is.na(trt_matrix)) ## 40 with species removed
+
 # apply(is.na(trt_matrix), 2, which)
-write.csv(trt_matrix, "output_data/01_trait_matrix_weighted_by_abundance.csv")
 
-# trt_matrix <- read.csv("output_data/01_trait_matrix_weighted_by_abundance.csv")
-## change NAs to 0 for now, change later !!!!!!!!
+write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transformed.csv")
 
-trt_matrix[is.na(trt_matrix)] <- 0
+## use gower here
+trt_matrix_sub <- trt_matrix[1:1000,] ### only works with these at the mo, fix later!!!!
+# Here we use Gower distance metric
+dist <- vegdist(trt_matrix_sub,  method = "gower", na.rm = T) 
+# ?daisy
+# 
+# dist <- daisy(trt_matrix, metric = "gower", stand = T)
+sum(is.na(dist))
+sum(is.nan(dist))
 
-trt_matrix$number_nas <- NULL
-## run PCA (called "julian_pca') with weighted traits; The weight assigned to the categorical feeding traits are lower
-?dudi.pca
-julian_pca<-dudi.pca(trt_matrix, col.w = c(1,1,1,1,1,1,0.2,0.2,0.2,0.2,0.2), scannf = FALSE, nf = 2)
-# scatter(julian_pca)
-# julian_pca
+## check symmetry
+# matrix_dissim_gower <- as.matrix(dist) 
+# rm(dist) 
+# gc() 
+# isSymmetric(matrix_dissim_gower) 
 
-### Plotting #####
-# plot with factoextra #
-# install.packages("factoextra")
-library(factoextra)
-head(fish_ab2)
+# PCoA 
+library(ape)
+PCOA <- pcoa(dist) # Error in min(D.eig$values) : invalid 'type' (complex) of argument
+
+# plot the eigenvalues and interpret
+barplot(PCOA$values$Relative_eig[1:2])
+#  cumulative explained variance of the first 2 axes
+sum(PCOA$values$Relative_eig[1:2])
+# Some distance measures may result in negative eigenvalues. In that case, add a correction:
+# PCOA <- pcoa(dist, correction = "cailliez") ## change later
+
+# Plot your results
+biplot.pcoa(PCOA)
+?biplot.pcoa
+## doesn't have traits, add them separately
+pca_origin <- biplot.pcoa(PCOA, trt_matrix_sub)
+
 # create a df with all sites, basin and year info for plotting aid
 site_year_basin<-fish_mat3[,c(1,3)]
 head(site_year_basin)
@@ -230,29 +247,16 @@ site_year_basin$Country<-fish_ab2$Country[match(site_year_basin$site, fish_ab2$S
 # add the year
 # site_year_basin<-cbind(site_year_basin, colsplit(site_year_basin$site_year, "_", c("SiteID", "Year")))
 names(site_year_basin)
-julian_pca$li # the row coordinates
-julian_pca$co # the vriable loading on the pca axes
 
-# prepare and export the overall sites coordinates
+PCOAaxes <- PCOA$vectors[,c(1,2)]
 
-trait_pca_scores<-cbind(julian_pca$li, site_year_basin)
+trait_pca_scores<-cbind(PCOAaxes, site_year_basin[1:1000,])
+view(trait_pca_scores)
 
-write.csv(trait_pca_scores, "output_data/01_trait_pca_scores_new_sites.csv", row.names = T)
+write.csv(trait_pca_scores, "output_data/01a_trait_pcoa_scores_new_sites.csv", row.names = T)
 
+## graph parameters to make plot pretty - not working!!!
+pca_origin <- biplot.pcoa(PCOA, trt_matrix_sub, habillage=site_year_basin$Country, label="var", geom="point", 
+                       addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
 
 pca_origin
-
-# the plots
-pca_origin <- fviz_pca(julian_pca, habillage=site_year_basin$Country, label="var", geom="point", 
-         addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
-
-pca_year<-fviz_pca(julian_pca, habillage=as.numeric(site_year_basin$year),label="var", geom="point", 
-                   addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
-pca_year
-pca_year+scale_color_grey()
-
-pca_year+scale_color_viridis_d()
-
-
-
-
