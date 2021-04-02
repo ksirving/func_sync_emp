@@ -131,6 +131,8 @@ trt <- trt %>%
 
 head(trt)
 
+trt$AVG_RGUILD_ORD =  as.ordered(trt$AVG_RGUILD_ORD)
+
 # check the matchin of spp
 setdiff(trt$Species, fish_ab_rel$Species)
 setdiff(fish_ab_rel$Species, trt$Species) # all matched!!!
@@ -195,35 +197,27 @@ row.names(fish_fortrt)<-fish_mat3$site_year
 # ?functcomp
 
 ## computes the functional composition of functional traits, by community weighted mean
-trt_matrix<-functcomp(trt, as.matrix(fish_fortrt), CWM.type = "all")
+# trt_matrix<-functcomp(trt, as.matrix(fish_fortrt), CWM.type = "all")
+trt_matrix<-functcomp(trt, as.matrix(fish_fortrt), CWM.type = "dom")  
 head(trt_matrix)
 
-sum(is.na(trt_matrix)) ## 40 with species removed
+trt_matrix$AVG_RGUILD_ORD = as.ordered(trt_matrix$AVG_RGUILD_ORD)
+DDf = gowdis(trt_matrix, ord = "podani") 
 
+## check NAs
+# sum(is.na(trt_matrix)) ## 40 with species removed
+# sum(is.na(DDf)) ## 0
 # apply(is.na(trt_matrix), 2, which)
 
 write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transformed.csv")
 
-## use gower here
-trt_matrix_sub <- trt_matrix[1:1000,] ### only works with these at the mo, fix later!!!!
-# Here we use Gower distance metric
-dist <- vegdist(trt_matrix_sub,  method = "gower", na.rm = T) 
-# ?daisy
-# 
-# dist <- daisy(trt_matrix, metric = "gower", stand = T)
-sum(is.na(dist))
-sum(is.nan(dist))
-
-## check symmetry
-# matrix_dissim_gower <- as.matrix(dist) 
-# rm(dist) 
-# gc() 
-# isSymmetric(matrix_dissim_gower) 
 
 # PCoA 
-library(ape)
-PCOA <- pcoa(dist) # Error in min(D.eig$values) : invalid 'type' (complex) of argument
 
+
+?cmdscale
+pcoa<-cmdscale(DDf,eig=T, add=T)
+head(pcoa$points)
 # plot the eigenvalues and interpret
 barplot(PCOA$values$Relative_eig[1:2])
 #  cumulative explained variance of the first 2 axes
