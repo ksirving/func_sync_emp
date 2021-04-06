@@ -10,7 +10,7 @@ library(ggplot2)
 
 ## synchonry data
 
-sync <- read.csv("output_data/02_results_between_site_synchrony_Jan2020.csv")
+sync <- read.csv("output_data/02a_results_between_site_synchrony_new_ord_new_sites.csv")
 head(sync)
 mean(na.omit(sync$Correlation))
 sum(na.omit(sync$Correlation))
@@ -128,7 +128,7 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   
   ### no boundaries
   
-  sync <- read.csv("output_data/02_results_between_site_synchrony_Feb2020_no_boundaries.csv")
+  sync <- read.csv("output_data/02a_results_between_site_synchrony_new_sites_new_ord_no_boundaries.csv")
   head(sync)
   mean(na.omit(sync$Correlation))
   sum(na.omit(sync$Correlation))

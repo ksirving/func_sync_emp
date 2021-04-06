@@ -201,6 +201,8 @@ row.names(fish_fortrt)<-fish_mat3$site_year
 trt_matrix<-functcomp(trt, as.matrix(fish_fortrt), CWM.type = "dom")  
 head(trt_matrix)
 
+# trt_matrix <- trt_matrix[1:1000,]
+
 trt_matrix$AVG_RGUILD_ORD = as.ordered(trt_matrix$AVG_RGUILD_ORD)
 DDf = gowdis(trt_matrix, ord = "podani") 
 
@@ -212,24 +214,56 @@ DDf = gowdis(trt_matrix, ord = "podani")
 write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transformed.csv")
 
 
-# PCoA 
+# PCoA with ape package
 
+# PCOA <- pcoa(DDf)
+# 
+# # plot the eigenvalues and interpret
+# barplot(PCOA$values$Relative_eig[1:10])
+# # Can you also calculate the cumulative explained variance of the first 3 axes?
+# 
+# # Some distance measures may result in negative eigenvalues. In that case, add a correction:
+# PCOA <- pcoa(dist, correction = "cailliez")
+# 
+# # Plot your results
+# biplot.pcoa(PCOA)
+# ?biplot.pcoa
+# ## doesn't have traits, add them separately
+# pca_origin <- biplot.pcoa(PCOA, trt_matrix_sub)
+
+### PCoA with cmdscale
 
 ?cmdscale
-pcoa<-cmdscale(DDf,eig=T, add=T)
+pcoa<-cmdscale(DDf,eig=T, add=T, k=2)
+class(pcoa)
+save(pcoa, file="models/01a_pcoa_cmdscale_2_dims.RData")
+## 0.006564796 0.006564796
 head(pcoa$points)
-# plot the eigenvalues and interpret
-barplot(PCOA$values$Relative_eig[1:2])
-#  cumulative explained variance of the first 2 axes
-sum(PCOA$values$Relative_eig[1:2])
-# Some distance measures may result in negative eigenvalues. In that case, add a correction:
-# PCOA <- pcoa(dist, correction = "cailliez") ## change later
+dim(pcoa$points) ## 7246    2
+plot(pcoa$points)
+pcoa$GOF
+pcoa$x
 
-# Plot your results
-biplot.pcoa(PCOA)
-?biplot.pcoa
-## doesn't have traits, add them separately
-pca_origin <- biplot.pcoa(PCOA, trt_matrix_sub)
+# plot(cumsum(pcoa$eig) / sum(pcoa$eig), 
+#      type="h", lwd=5, las=1, 
+#      xlab="Number of dimensions", 
+#      ylab=expression(R^2))
+# 
+# plot(pcoa$eig, 
+#        type="h", lwd=5, las=1, 
+#        xlab="Number of dimensions", 
+#        ylab="Eigenvalues")
+
+
+
+pcoa_vals <- as.data.frame(pcoa$points)
+pcoa$ac
+class(pcoa)
+head(pcoa_vals)
+str(pcoa_vals)
+
+
+
 
 # create a df with all sites, basin and year info for plotting aid
 site_year_basin<-fish_mat3[,c(1,3)]
@@ -242,15 +276,20 @@ site_year_basin$Country<-fish_ab2$Country[match(site_year_basin$site, fish_ab2$S
 # site_year_basin<-cbind(site_year_basin, colsplit(site_year_basin$site_year, "_", c("SiteID", "Year")))
 names(site_year_basin)
 
-PCOAaxes <- PCOA$vectors[,c(1,2)]
+PCOAaxes <- pcoa$points
 
-trait_pca_scores<-cbind(PCOAaxes, site_year_basin[1:1000,])
-view(trait_pca_scores)
+trait_pca_scores<-cbind(PCOAaxes, site_year_basin)
+View(trait_pca_scores)
+write.csv(trait_pca_scores, "output_data/01a_trait_pcoa_scores_new_sites_new_ord.csv", row.names = T)
 
-write.csv(trait_pca_scores, "output_data/01a_trait_pcoa_scores_new_sites.csv", row.names = T)
+x <- pcoa$points[,1]
+y <- pcoa$points[,2]
+plot(x, y, xlab="Axis 1", ylab="Axis 2",
+     main="Metric MDS") ## , type="n"
+text(x, y, labels = row.names(trt_matrix), cex=.7)
 
 ## graph parameters to make plot pretty - not working!!!
-pca_origin <- biplot.pcoa(PCOA, trt_matrix_sub, habillage=site_year_basin$Country, label="var", geom="point", 
+pca_origin <- biplot.pcoa(pcoa, trt_matrix, habillage=site_year_basin$Country, label="var", geom="point", 
                        addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
 
 pca_origin
