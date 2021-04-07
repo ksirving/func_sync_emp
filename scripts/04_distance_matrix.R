@@ -390,7 +390,7 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   
   ## get distances and similarities
   
-  BasinSync <- read.csv("output_data/02_between_basin_sync_all_together_new_ord.csv")
+  BasinSync <- read.csv("output_data/02a_between_basin_sync_all_together_new_ord.csv")
   BasinSync
   
   BasinSync <- BasinSync %>%

@@ -239,9 +239,10 @@ write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transf
 
 ?cmdscale
 ?prcomp
-pcoa<-cmdscale(DDf,eig=T, add=T)
+pcoa<-cmdscale(DDf,eig=T, add=T, k=2000)
 class(pcoa)
-save(pcoa, file="models/01a_pcoa_cmdscale_2_dims.RData")
+# save(pcoa, file="models/01a_pcoa_cmdscale_neg_dims.RData")
+save(pcoa, file="models/01a_pcoa_cmdscale_17_dims.RData")
 
 load(file="models/01a_pcoa_cmdscale_2_dims.RData")
 ## 0.006564796 0.006564796
@@ -259,15 +260,15 @@ b <- barplot(eig_pc,
              ylab="Proportion of explained variance (%)", y.axis=NULL,
              col="darkgrey")
 
-# plot(cumsum(pcoa$eig) / sum(pcoa$eig), 
-#      type="h", lwd=5, las=1, 
-#      xlab="Number of dimensions", 
-#      ylab=expression(R^2))
-# 
-# plot(pcoa$eig, 
-#        type="h", lwd=5, las=1, 
-#        xlab="Number of dimensions", 
-#        ylab="Eigenvalues")
+plot(cumsum(pcoa$eig) / sum(pcoa$eig),
+     type="h", lwd=5, las=1,
+     xlab="Number of dimensions",
+     ylab=expression(R^2))
+
+plot(pcoa$eig,
+       type="h", lwd=5, las=1,
+       xlab="Number of dimensions",
+       ylab="Eigenvalues")
 
 ordiplot(scores(pcoa, choices=c(1,2)), type="t", main="PCoA with species weighted averages")
 abline(h=0, lty=3)
