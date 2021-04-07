@@ -123,7 +123,7 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   facet_wrap(~Axis)
   
   
-  write.csv(BasinsDFx, "output_data/04_sync_data_similarity_euclidean_dist.csv")
+  write.csv(BasinsDFx, "output_data/04_sync_data_similarity_euclidean_dist_new_ord.csv")
   
   
   ### no boundaries
@@ -229,7 +229,7 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   facet_wrap(~Axis)
   
   
-  write.csv(syncDF, "output_data/04_sync_data_similarity_euclidean_dist_no_boundaries.csv")
+  write.csv(syncDF, "output_data/04_sync_data_similarity_euclidean_dist_no_boundaries_new_ord.csv")
   
   
   
@@ -294,9 +294,9 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   
   ## get distances and similarities
   
-  BasinSync <- read.csv("output_data/02_between_basin_sync_per_country.csv")
+  BasinSync <- read.csv("output_data/02_between_basin_sync_per_country_new_ord.csv")
   BasinSync
-  
+ 
   BasinSync <- BasinSync %>%
     rename(BasinPairs = X)
   
@@ -378,7 +378,7 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   
   head(CountriesDFx)
   
-  write.csv(CountriesDFx, "output_data/04_basin_sync_data_similarity_euclidean_dist.csv")
+  write.csv(CountriesDFx, "output_data/04_basin_sync_data_similarity_euclidean_dist_new_ord.csv")
   
   # #then plot
   # ggplot(CountriesDFx, aes(x=Similarity,y=Correlation))+
@@ -390,7 +390,7 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   
   ## get distances and similarities
   
-  BasinSync <- read.csv("output_data/02_between_basin_sync_all_together.csv")
+  BasinSync <- read.csv("output_data/02_between_basin_sync_all_together_new_ord.csv")
   BasinSync
   
   BasinSync <- BasinSync %>%
@@ -468,7 +468,7 @@ ggplot(BasinsDFx, aes(x=Similarity,y=Correlation))+
   
   head(BasinsDF)
   
-  write.csv(BasinsDF, "output_data/04_basin_sync_data_similarity_euclidean_dist_all_together.csv")
+  write.csv(BasinsDF, "output_data/04_basin_sync_data_similarity_euclidean_dist_all_together_new_ord.csv")
   
 
 

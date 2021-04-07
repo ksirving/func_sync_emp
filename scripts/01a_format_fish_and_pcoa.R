@@ -213,7 +213,11 @@ DDf = gowdis(trt_matrix, ord = "podani")
 
 write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transformed.csv")
 
+# trt_matrix <- read.csv("output_data/01a_trait_matrix_weighted_by_abundance_transformed.csv")
+# View(trt_matrix)
+# str(trt_matrix)
 
+# trt_matrix <- trt_matrix[,-1]
 # PCoA with ape package
 
 # PCOA <- pcoa(DDf)
@@ -234,15 +238,26 @@ write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transf
 ### PCoA with cmdscale
 
 ?cmdscale
-pcoa<-cmdscale(DDf,eig=T, add=T, k=2)
+?prcomp
+pcoa<-cmdscale(DDf,eig=T, add=T)
 class(pcoa)
 save(pcoa, file="models/01a_pcoa_cmdscale_2_dims.RData")
+
+load(file="models/01a_pcoa_cmdscale_2_dims.RData")
 ## 0.006564796 0.006564796
 head(pcoa$points)
 dim(pcoa$points) ## 7246    2
 plot(pcoa$points)
 pcoa$GOF
 pcoa$x
+
+
+eig_pc <- pcoa$eig * 100 / sum(pcoa$eig)
+b <- barplot(eig_pc,
+             las=1,
+             xlab="Dimensions", 
+             ylab="Proportion of explained variance (%)", y.axis=NULL,
+             col="darkgrey")
 
 # plot(cumsum(pcoa$eig) / sum(pcoa$eig), 
 #      type="h", lwd=5, las=1, 
@@ -254,7 +269,12 @@ pcoa$x
 #        xlab="Number of dimensions", 
 #        ylab="Eigenvalues")
 
-
+ordiplot(scores(pcoa, choices=c(1,2)), type="t", main="PCoA with species weighted averages")
+abline(h=0, lty=3)
+abline(v=0, lty=3)
+# Add weighted average projection of species
+spe.wa <- wascores(pcoa$points[,1:2], trt_matrix)
+text(spe.wa, rownames(spe.wa), cex=0.7, col="red")
 
 pcoa_vals <- as.data.frame(pcoa$points)
 pcoa$ac
