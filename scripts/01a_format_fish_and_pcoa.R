@@ -8,6 +8,7 @@ library(tidyr)
 library(dplyr)
 library(ade4)
 library(cluster)
+library(ggplot2)
 ## upload fish abundance data
 setwd("/Users/katieirving/Documents/git/func_sync_emp")
 
@@ -239,18 +240,20 @@ write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transf
 
 ?cmdscale
 ?prcomp
-pcoa<-cmdscale(DDf,eig=T, add=T, k=2000)
+pcoa<-cmdscale(DDf,eig=T, add=T, k=200)
 class(pcoa)
 # save(pcoa, file="models/01a_pcoa_cmdscale_neg_dims.RData")
-save(pcoa, file="models/01a_pcoa_cmdscale_17_dims.RData")
-
+# save(pcoa, file="models/01a_pcoa_cmdscale_17_dims.RData")
+# save(pcoa, file="models/01a_pcoa_cmdscale_2000_dims.RData")
+save(pcoa, file="models/01a_pcoa_cmdscale_200_dims.RData")
 load(file="models/01a_pcoa_cmdscale_2_dims.RData")
 ## 0.006564796 0.006564796
 head(pcoa$points)
-dim(pcoa$points) ## 7246    2
+dim(pcoa$points) ## 7246    200
 plot(pcoa$points)
 pcoa$GOF
 pcoa$x
+pcoa
 
 
 eig_pc <- pcoa$eig * 100 / sum(pcoa$eig)
@@ -270,21 +273,9 @@ plot(pcoa$eig,
        xlab="Number of dimensions",
        ylab="Eigenvalues")
 
-ordiplot(scores(pcoa, choices=c(1,2)), type="t", main="PCoA with species weighted averages")
-abline(h=0, lty=3)
-abline(v=0, lty=3)
-# Add weighted average projection of species
-spe.wa <- wascores(pcoa$points[,1:2], trt_matrix)
-text(spe.wa, rownames(spe.wa), cex=0.7, col="red")
-
-pcoa_vals <- as.data.frame(pcoa$points)
-pcoa$ac
-class(pcoa)
-head(pcoa_vals)
-str(pcoa_vals)
-
-
-
+## calculate the percentage of variation that each MDS axis accounts for...
+mds.var.per <- round(pcoa$eig/sum(pcoa$eig)*100, 1)
+mds.var.per
 
 # create a df with all sites, basin and year info for plotting aid
 site_year_basin<-fish_mat3[,c(1,3)]
@@ -297,20 +288,52 @@ site_year_basin$Country<-fish_ab2$Country[match(site_year_basin$site, fish_ab2$S
 # site_year_basin<-cbind(site_year_basin, colsplit(site_year_basin$site_year, "_", c("SiteID", "Year")))
 names(site_year_basin)
 
-PCOAaxes <- pcoa$points
+## now make a fancy looking plot that shows the MDS axes and the variation:
+mds.values <- pcoa$points
+mds.data <- data.frame(Sample=rownames(mds.values),
+                       X=mds.values[,1],
+                       Y=mds.values[,2])
 
-trait_pca_scores<-cbind(PCOAaxes, site_year_basin)
+trait_pca_scores<-cbind(mds.data, site_year_basin)
 View(trait_pca_scores)
 write.csv(trait_pca_scores, "output_data/01a_trait_pcoa_scores_new_sites_new_ord.csv", row.names = T)
 
-x <- pcoa$points[,1]
-y <- pcoa$points[,2]
-plot(x, y, xlab="Axis 1", ylab="Axis 2",
-     main="Metric MDS") ## , type="n"
-text(x, y, labels = row.names(trt_matrix), cex=.7)
 
-## graph parameters to make plot pretty - not working!!!
-pca_origin <- biplot.pcoa(pcoa, trt_matrix, habillage=site_year_basin$Country, label="var", geom="point", 
-                       addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
+## calculate the percentage of variation that each MDS axis accounts for...
+mds.var.per <- round(pcoa$eig/sum(pcoa$eig)*100, 1)
+mds.var.per
 
-pca_origin
+
+head(mds.data)
+
+ggplot(data=trait_pca_scores, aes(x=X, y=Y, color= Country)) +
+  geom_point() +
+  theme_bw() +
+  xlab(paste("PCoA - ", mds.var.per[1], "%", sep="")) +
+  ylab(paste("PCoA - ", mds.var.per[2], "%", sep="")) +
+  ggtitle("PCoA plot using Gower distance")
+
+
+pcoa_vals <- as.data.frame(pcoa$points)
+pcoa$ac
+class(pcoa)
+head(pcoa_vals)
+str(pcoa_vals)
+
+pcoa_vals <- as.data.frame(pcoa$points)
+pcoa$ac
+class(pcoa)
+head(pcoa_vals)
+str(pcoa_vals)
+
+# x <- pcoa$points[,1]
+# y <- pcoa$points[,2]
+# plot(x, y, xlab="Axis 1", ylab="Axis 2",
+#      main="Metric MDS") ## , type="n"
+# text(x, y, labels = row.names(trt_matrix), cex=.7)
+# 
+# ## graph parameters to make plot pretty - not working!!!
+# pca_origin <- biplot.pcoa(pcoa, trt_matrix, habillage=site_year_basin$Country, label="var", geom="point", 
+#                        addEllipses = T, ellipse.type='convex', ellipse.alpha=0.01, labelsize=4, col.var="black")
+# 
+# pca_origin

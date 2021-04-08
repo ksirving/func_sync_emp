@@ -163,16 +163,17 @@ basindata_melt <- pca_sites  %>%
   rename(axis=variable, score = value)
 
 synchrony_axis = NULL
-
+ax=1
 
 for (ax in 1: length(Naxis)) {
   axis_data<-basindata_melt[basindata_melt$axis==unique(basindata_melt$axis)[ax],]
   
   years <- unique(sort(axis_data$year)) ## define years for columns
+  
   years
   # make df wide
   axis_data  <- axis_data %>% 
-    dplyr::select(-c(site_year, HydroBasin, Country) ) %>%
+    dplyr::select(-c(site_year,  Country) ) %>%
     spread(site, score) #%>%
   
   # flip data
