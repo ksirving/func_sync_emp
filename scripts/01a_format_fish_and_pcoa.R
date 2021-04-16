@@ -225,9 +225,7 @@ write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transf
 # 
 # # plot the eigenvalues and interpret
 # barplot(PCOA$values$Relative_eig[1:10])
-# # Can you also calculate the cumulative explained variance of the first 3 axes?
-# 
-# # Some distance measures may result in negative eigenvalues. In that case, add a correction:
+
 # PCOA <- pcoa(dist, correction = "cailliez")
 # 
 # # Plot your results
@@ -238,8 +236,7 @@ write.csv(trt_matrix, "output_data/01a_trait_matrix_weighted_by_abundance_transf
 
 ### PCoA with cmdscale
 
-?cmdscale
-?prcomp
+
 pcoa<-cmdscale(DDf,eig=T, add=T, k=200)
 class(pcoa)
 # save(pcoa, file="models/01a_pcoa_cmdscale_neg_dims.RData")
@@ -247,7 +244,7 @@ class(pcoa)
 # save(pcoa, file="models/01a_pcoa_cmdscale_2000_dims.RData")
 save(pcoa, file="models/01a_pcoa_cmdscale_200_dims.RData")
 load(file="models/01a_pcoa_cmdscale_2_dims.RData")
-## 0.006564796 0.006564796
+
 head(pcoa$points)
 dim(pcoa$points) ## 7246    200
 plot(pcoa$points)
@@ -273,7 +270,7 @@ plot(pcoa$eig,
        xlab="Number of dimensions",
        ylab="Eigenvalues")
 
-## calculate the percentage of variation that each MDS axis accounts for...
+## calculate the percentage of variation that each pcoa axis accounts for...
 mds.var.per <- round(pcoa$eig/sum(pcoa$eig)*100, 1)
 mds.var.per
 

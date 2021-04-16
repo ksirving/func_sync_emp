@@ -270,7 +270,7 @@ ggsave(a2a, filename=file.name1, dpi=300, height=5, width=6)
 
 
 
-# Between basin synchrony -------------------------------------------------
+# Matrix regression on synchrony -------------------------------------------------
 
 
 
